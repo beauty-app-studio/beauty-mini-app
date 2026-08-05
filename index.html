@@ -1,0 +1,396 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Beauty Studio</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700&family=Playfair+Display:wght@600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <main class="app-shell">
+    <section class="screen active" id="home-screen">
+      <header class="topbar">
+        <div>
+          <p class="eyebrow">Telegram Mini App</p>
+          <h1>Beauty Studio</h1>
+        </div>
+        <button class="icon-button" aria-label="Улюблене">♡</button>
+      </header>
+
+      <section class="welcome-strip">
+        <div>
+          <p class="eyebrow">Ваш простір краси</p>
+          <h2 id="home-greeting">Раді бачити вас 🌸</h2>
+        </div>
+        <div class="mini-avatar" id="home-avatar">B</div>
+      </section>
+
+      <section class="hero">
+        <img src="https://images.unsplash.com/photo-1600948836101-f9ffda59d250?auto=format&fit=crop&w=1200&q=85" alt="Інтер'єр салону">
+        <div class="hero-overlay">
+          <span class="badge">Простір вашої краси</span>
+          <h2>Ласкаво просимо</h2>
+          <p>Оберіть послугу, майстра та зручний час за кілька хвилин.</p>
+        </div>
+      </section>
+
+      <button class="primary-button" data-open="masters-screen">Записатися</button>
+
+      <section class="quick-grid">
+        <button class="quick-card" data-open="masters-screen">
+          <span class="quick-icon">👩‍🎨</span>
+          <span><strong>Наші майстри</strong><small>Профілі та спеціалізація</small></span>
+        </button>
+        <button class="quick-card" data-open="services-screen">
+          <span class="quick-icon">💅</span>
+          <span><strong>Послуги</strong><small>Ціни й тривалість</small></span>
+        </button>
+        <button class="quick-card">
+          <span class="quick-icon">📍</span>
+          <span><strong>Адреса</strong><small>Київ, вул. Хрещатик, 1</small></span>
+        </button>
+        <button class="quick-card">
+          <span class="quick-icon">☎️</span>
+          <span><strong>Контакти</strong><small>+380 67 123 45 67</small></span>
+        </button>
+      </section>
+    </section>
+
+    <section class="screen" id="masters-screen">
+      <header class="section-header">
+        <button class="back-button" data-back>←</button>
+        <div><p class="eyebrow">Крок 1</p><h2>Оберіть майстра</h2></div>
+      </header>
+
+      <div class="master-list">
+        <article class="master-card compact">
+          <img src="https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&w=700&q=85" alt="Майстер нігтьового сервісу">
+          <div class="master-content">
+            <div class="master-title-row">
+              <div><h3>Майстер нігтьового сервісу</h3><p>Манікюр · Педикюр</p></div>
+              <span class="rating">★ 4.9</span>
+            </div>
+            <button class="secondary-button profile-open" data-master-key="nails">Переглянути профіль</button>
+          </div>
+        </article>
+
+        <article class="master-card compact">
+          <img src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=700&q=85" alt="Стиліст-колорист">
+          <div class="master-content">
+            <div class="master-title-row">
+              <div><h3>Стиліст-колорист</h3><p>Фарбування · Стрижки</p></div>
+              <span class="rating">★ 4.8</span>
+            </div>
+            <button class="secondary-button profile-open" data-master-key="colorist">Переглянути профіль</button>
+          </div>
+        </article>
+
+        <article class="master-card compact">
+          <img src="https://images.unsplash.com/photo-1544005313-94ddf0286df2?auto=format&fit=crop&w=700&q=85" alt="Універсальний майстер">
+          <div class="master-content">
+            <div class="master-title-row">
+              <div><h3>Універсальний майстер</h3><p>Укладки · Стрижки · Догляд</p></div>
+              <span class="rating">★ 5.0</span>
+            </div>
+            <button class="secondary-button profile-open" data-master-key="universal">Переглянути профіль</button>
+          </div>
+        </article>
+      </div>
+    </section>
+
+
+    <section class="screen" id="master-profile-screen">
+      <header class="profile-header">
+        <button class="floating-back" data-back>←</button>
+        <button class="floating-like" id="profile-like">♡</button>
+        <img id="profile-photo" src="" alt="Фото майстра">
+        <div class="profile-gradient"></div>
+        <div class="profile-name-block">
+          <span class="profile-badge">Перевірений майстер</span>
+          <h2 id="profile-name">Майстер</h2>
+          <p id="profile-specialty">Спеціалізація</p>
+        </div>
+      </header>
+
+      <section class="profile-body">
+        <div class="profile-stats">
+          <div><strong id="profile-rating">4.9</strong><span>рейтинг</span></div>
+          <div><strong id="profile-experience">7 років</strong><span>досвід</span></div>
+          <div><strong id="profile-clients">800+</strong><span>клієнтів</span></div>
+        </div>
+
+        <section class="profile-section">
+          <p class="eyebrow">Про майстра</p>
+          <p id="profile-about" class="profile-about"></p>
+        </section>
+
+        <section class="profile-section">
+          <div class="section-title-row">
+            <div>
+              <p class="eyebrow">Портфоліо</p>
+              <h3>Останні роботи</h3>
+            </div>
+            <span class="muted-label">Гортайте →</span>
+          </div>
+          <div class="portfolio-scroll" id="profile-portfolio"></div>
+        </section>
+
+        <section class="profile-section review-card">
+          <div class="review-stars">★★★★★</div>
+          <p id="profile-review">Дуже уважний майстер і чудовий результат.</p>
+          <small>Відгук клієнта · демо</small>
+        </section>
+
+        <button class="primary-button" id="profile-book-button">
+          Записатися до майстра
+        </button>
+      </section>
+    </section>
+
+    <section class="screen" id="services-screen">
+      <header class="section-header">
+        <button class="back-button" data-back>←</button>
+        <div><p class="eyebrow">Крок 2</p><h2>Оберіть послугу</h2></div>
+      </header>
+
+      <div class="selected-chip" id="selected-master-chip">Майстер ще не обраний</div>
+
+      <div class="service-list">
+        <button class="service-card" data-service="Манікюр + покриття" data-price="900 грн" data-duration="90 хв">
+          <div><strong>Манікюр + покриття</strong><small>90 хвилин</small></div><span>900 грн</span>
+        </button>
+        <button class="service-card" data-service="Педикюр класичний" data-price="1200 грн" data-duration="120 хв">
+          <div><strong>Педикюр класичний</strong><small>120 хвилин</small></div><span>1200 грн</span>
+        </button>
+        <button class="service-card" data-service="Стрижка" data-price="1000 грн" data-duration="60 хв">
+          <div><strong>Стрижка</strong><small>60 хвилин</small></div><span>1000 грн</span>
+        </button>
+        <button class="service-card" data-service="Фарбування" data-price="3500 грн" data-duration="180 хв">
+          <div><strong>Фарбування</strong><small>180 хвилин</small></div><span>3500 грн</span>
+        </button>
+        <button class="service-card" data-service="Укладка" data-price="900 грн" data-duration="60 хв">
+          <div><strong>Укладка</strong><small>60 хвилин</small></div><span>900 грн</span>
+        </button>
+      </div>
+    </section>
+
+    <section class="screen" id="date-screen">
+      <header class="section-header">
+        <button class="back-button" data-back>←</button>
+        <div><p class="eyebrow">Крок 3</p><h2>Оберіть дату</h2></div>
+      </header>
+
+      <div class="summary-card mini-summary" id="date-summary"></div>
+
+      <div class="calendar-card">
+        <div class="calendar-title">
+          <button id="previous-month">‹</button>
+          <strong id="calendar-month"></strong>
+          <button id="next-month">›</button>
+        </div>
+        <div class="weekdays">
+          <span>Пн</span><span>Вт</span><span>Ср</span><span>Чт</span><span>Пт</span><span>Сб</span><span>Нд</span>
+        </div>
+        <div class="calendar-grid" id="calendar-grid"></div>
+      </div>
+    </section>
+
+    <section class="screen" id="time-screen">
+      <header class="section-header">
+        <button class="back-button" data-back>←</button>
+        <div><p class="eyebrow">Крок 4</p><h2>Оберіть час</h2></div>
+      </header>
+
+      <div class="summary-card mini-summary" id="time-summary"></div>
+      <div class="time-grid" id="time-grid"></div>
+    </section>
+
+    <section class="screen" id="details-screen">
+      <header class="section-header">
+        <button class="back-button" data-back>←</button>
+        <div><p class="eyebrow">Крок 5</p><h2>Ваші дані</h2></div>
+      </header>
+
+      <div class="summary-card" id="booking-summary"></div>
+
+      <form id="booking-form" class="booking-form">
+        <label>
+          <span>Ім’я або ім’я та прізвище</span>
+          <input id="client-name" type="text" placeholder="Наприклад: Марія Коваль" required>
+        </label>
+        <label>
+          <span>Номер телефону</span>
+          <input id="client-phone" type="tel" placeholder="+380671234567" required>
+        </label>
+        <button class="primary-button" type="submit">Підтвердити запис</button>
+      </form>
+    </section>
+
+
+
+    <section class="screen" id="profile-setup-screen">
+      <header class="section-header">
+        <button class="back-button" data-back>←</button>
+        <div>
+          <p class="eyebrow">Перший вхід</p>
+          <h2>Налаштуємо профіль</h2>
+        </div>
+      </header>
+
+      <section class="setup-card">
+        <div class="setup-icon">🌸</div>
+        <h3>Як до вас звертатися?</h3>
+        <p>
+          Вкажіть справжнє ім’я або зручну форму звертання.
+          Це ім’я належатиме саме профілю і не змінюватиметься
+          через нові або скасовані записи.
+        </p>
+
+        <form id="profile-setup-form">
+          <label>
+            <span>Ваше ім’я</span>
+            <input
+              id="profile-name-input"
+              type="text"
+              maxlength="40"
+              placeholder="Наприклад: Марія"
+              autocomplete="name"
+              required
+            >
+          </label>
+
+          <button class="primary-button" type="submit">
+            Зберегти профіль
+          </button>
+        </form>
+
+        <small class="privacy-note">
+          Telegram username і фото підтягнуться автоматично,
+          коли Mini App працюватиме всередині Telegram.
+        </small>
+      </section>
+    </section>
+
+    <section class="screen" id="client-profile-screen">
+      <header class="section-header profile-page-header">
+        <button class="back-button" data-back>←</button>
+        <div>
+          <p class="eyebrow">Особистий кабінет</p>
+          <h2>Мій профіль</h2>
+        </div>
+      </header>
+
+      <section class="client-identity-card">
+        <div class="client-avatar" id="client-avatar">B</div>
+        <div>
+          <h3 id="client-profile-name">Гість</h3>
+          <p id="client-profile-username">Telegram-профіль</p>
+        </div>
+        <span class="verified-chip">Telegram</span>
+        <button class="edit-profile-name" id="edit-profile-name">
+          Змінити ім’я
+        </button>
+      </section>
+
+      <section class="profile-dashboard-grid">
+        <article class="dashboard-tile">
+          <span>🎁</span>
+          <strong id="bonus-points">350</strong>
+          <small>бонусів</small>
+        </article>
+        <article class="dashboard-tile">
+          <span>♡</span>
+          <strong id="favorite-count">0</strong>
+          <small>улюблених</small>
+        </article>
+        <article class="dashboard-tile">
+          <span>✓</span>
+          <strong id="visit-count">1</strong>
+          <small>візитів</small>
+        </article>
+      </section>
+
+      <section class="profile-section">
+        <div class="section-title-row">
+          <div>
+            <p class="eyebrow">Найближчий візит</p>
+            <h3>Мій запис</h3>
+          </div>
+        </div>
+
+        <article class="next-booking-card" id="next-booking-card">
+          <div class="empty-booking-state">
+            <span>📅</span>
+            <strong>Записів поки немає</strong>
+            <p>Оберіть майстра та зручний час.</p>
+          </div>
+        </article>
+
+        <div class="booking-action-row" id="profile-booking-actions">
+          <button class="soft-action-button" id="repeat-booking-button">
+            ↻ Повторити
+          </button>
+          <button class="soft-action-button danger" id="cancel-booking-button">
+            Скасувати
+          </button>
+        </div>
+      </section>
+
+      <section class="profile-section">
+        <p class="eyebrow">Переваги</p>
+        <div class="loyalty-card">
+          <div>
+            <span class="loyalty-label">Beauty Club</span>
+            <h3>До подарунка залишилось 150 балів</h3>
+          </div>
+          <div class="loyalty-progress">
+            <span></span>
+          </div>
+          <small>Нараховуємо бонуси після кожного завершеного візиту.</small>
+        </div>
+      </section>
+
+      <section class="settings-list">
+        <button>
+          <span>♡</span>
+          <div><strong>Улюблені майстри</strong><small>Ваш особистий список</small></div>
+          <b>›</b>
+        </button>
+        <button>
+          <span>🔔</span>
+          <div><strong>Сповіщення</strong><small>Нагадування про записи</small></div>
+          <b>›</b>
+        </button>
+        <button>
+          <span>☎</span>
+          <div><strong>Підтримка салону</strong><small>Зв’язатися з адміністратором</small></div>
+          <b>›</b>
+        </button>
+      </section>
+    </section>
+
+    <section class="screen" id="success-screen">
+      <div class="success-card">
+        <div class="success-icon">✓</div>
+        <p class="eyebrow">Демо-запис створено</p>
+        <h2>Дякуємо!</h2>
+        <p id="success-description"></p>
+        <button class="primary-button" data-open="home-screen">На головну</button>
+      </div>
+    </section>
+
+    <nav class="bottom-nav">
+      <button class="nav-item active-nav" data-open="home-screen"><span>⌂</span>Головна</button>
+      <button class="nav-item" data-open="masters-screen"><span>♙</span>Майстри</button>
+      <button class="nav-item" data-open="services-screen"><span>◇</span>Послуги</button>
+      <button class="nav-item" data-open="client-profile-screen"><span>○</span>Профіль</button>
+    </nav>
+  </main>
+
+  <script src="https://telegram.org/js/telegram-web-app.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
