@@ -1,8 +1,12 @@
 
+const API_BASE_URL =
+  "https://logistics-sacramento-php-chubby.trycloudflare.com";
+
 const masters = {
   nails: {
     name: "Майстер нігтьового сервісу",
     specialty: "Манікюр · Педикюр · Nail-дизайн",
+    services: ["Манікюр", "Педикюр"],
     photo: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&w=1000&q=88",
     rating: "4.9",
     experience: "7 років",
@@ -18,6 +22,7 @@ const masters = {
   colorist: {
     name: "Стиліст-колорист",
     specialty: "Фарбування · Стрижки · Укладки",
+    services: ["Фарбування", "Стрижка", "Укладка"],
     photo: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=1000&q=88",
     rating: "4.8",
     experience: "9 років",
@@ -33,6 +38,7 @@ const masters = {
   universal: {
     name: "Універсальний майстер",
     specialty: "Образ · Догляд · Консультація",
+    services: ["Манікюр", "Педикюр", "Фарбування", "Стрижка", "Укладка"],
     photo: "https://images.unsplash.com/photo-1544005313-94ddf0286df2?auto=format&fit=crop&w=1000&q=88",
     rating: "5.0",
     experience: "6 років",
@@ -46,6 +52,65 @@ const masters = {
     ]
   }
 };
+
+function getTelegramWebApp() {
+  return window.Telegram?.WebApp || null;
+}
+
+function showAppAlert(message) {
+  const tg = getTelegramWebApp();
+
+  if (tg?.showAlert) {
+    tg.showAlert(message);
+  } else {
+    window.alert(message);
+  }
+}
+
+function apiErrorMessage(status, responseData) {
+  if (status === 401) {
+    return (
+      "Не вдалося підтвердити Telegram-сесію. " +
+      "Закрийте Mini App і відкрийте його знову через бота."
+    );
+  }
+
+  if (status === 409) {
+    return (
+      "Цей час щойно зайняли. Поверніться до вибору часу " +
+      "та оберіть інший варіант."
+    );
+  }
+
+  if (status === 422) {
+    const detail = responseData?.detail;
+
+    if (detail === "This master does not provide the selected service.") {
+      return "Обраний майстер не виконує цю послугу.";
+    }
+
+    if (detail === "Unknown service." || detail === "Unknown master.") {
+      return "Не вдалося розпізнати послугу або майстра.";
+    }
+
+    return "Перевірте дані запису та спробуйте ще раз.";
+  }
+
+  return (
+    responseData?.detail ||
+    "Не вдалося створити запис. Спробуйте ще раз."
+  );
+}
+
+function updateServiceAvailability(masterKey) {
+  const allowedServices = masters[masterKey]?.services || [];
+
+  document.querySelectorAll(".service-card").forEach(card => {
+    const isAvailable = allowedServices.includes(card.dataset.service);
+    card.hidden = !isAvailable;
+    card.disabled = !isAvailable;
+  });
+}
 
 function getSavedBooking() {
   try {
@@ -253,7 +318,14 @@ document.querySelector("#profile-like").addEventListener("click", e => {
 document.querySelector("#profile-book-button").addEventListener("click", () => {
   const master = masters[activeMasterKey];
   booking.master = master.name;
-  document.querySelector("#selected-master-chip").textContent = `Обрано: ${booking.master}`;
+  booking.service = "";
+  booking.price = "";
+  booking.duration = "";
+
+  updateServiceAvailability(activeMasterKey);
+
+  document.querySelector("#selected-master-chip").textContent =
+    `Обрано: ${booking.master}`;
   showScreen("services-screen");
 });
 
@@ -345,37 +417,156 @@ function renderSummary() {
   }
 }
 
-document.querySelector("#booking-form").addEventListener("submit", e => {
-  e.preventDefault();
-  const name = document.querySelector("#client-name").value.trim();
-  const phone = document.querySelector("#client-phone").value.trim();
+document.querySelector("#booking-form").addEventListener(
+  "submit",
+  async event => {
+    event.preventDefault();
 
-  if (name.length < 2 || phone.replace(/\D/g, "").length < 10) {
-    alert("Перевірте ім’я та номер телефону");
-    return;
+    const form = event.currentTarget;
+    const submitButton =
+      event.submitter ||
+      form.querySelector('button[type="submit"], input[type="submit"]');
+
+    const name = document.querySelector("#client-name").value.trim();
+    const phone = document.querySelector("#client-phone").value.trim();
+    const tg = getTelegramWebApp();
+    const initData = tg?.initData || "";
+
+    if (name.length < 2 || phone.replace(/\D/g, "").length < 10) {
+      showAppAlert("Перевірте ім’я та номер телефону");
+      return;
+    }
+
+    if (
+      !booking.master ||
+      !booking.service ||
+      !booking.date ||
+      !booking.time
+    ) {
+      showAppAlert("Заповніть усі дані запису");
+      return;
+    }
+
+    if (!initData) {
+      showAppAlert(
+        "Для справжнього запису відкрийте Mini App через Telegram-бота."
+      );
+      return;
+    }
+
+    const originalButtonText =
+      submitButton?.tagName === "INPUT"
+        ? submitButton.value
+        : submitButton?.textContent;
+
+    if (submitButton) {
+      submitButton.disabled = true;
+
+      if (submitButton.tagName === "INPUT") {
+        submitButton.value = "Створюємо запис…";
+      } else {
+        submitButton.textContent = "Створюємо запис…";
+      }
+    }
+
+    try {
+      const response = await fetch(
+        `${API_BASE_URL}/api/bookings`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            client_name: name,
+            client_phone: phone,
+            service: booking.service,
+            master: booking.master,
+            booking_date: booking.date,
+            booking_time: booking.time,
+            init_data: initData,
+          }),
+        }
+      );
+
+      let responseData = {};
+
+      try {
+        responseData = await response.json();
+      } catch {
+        responseData = {};
+      }
+
+      if (!response.ok) {
+        throw new Error(
+          apiErrorMessage(response.status, responseData)
+        );
+      }
+
+      const result = {
+        ...booking,
+        name,
+        phone,
+        bookingId: responseData.booking_id,
+        status: responseData.status || "new",
+        createdAt: new Date().toISOString(),
+      };
+
+      localStorage.setItem(
+        "beautyStudioLastBooking",
+        JSON.stringify(result)
+      );
+      saveProfileName(name);
+      renderClientProfile();
+
+      document.querySelector("#success-description").innerHTML =
+        `${name}, вашу заявку <strong>№${responseData.booking_id}</strong> ` +
+        `на <strong>${booking.service}</strong> створено.<br>` +
+        `${booking.date} о ${booking.time}<br>` +
+        `Майстер: ${booking.master}`;
+
+      tg?.HapticFeedback?.notificationOccurred("success");
+      showScreen("success-screen");
+    } catch (error) {
+      console.error("Booking API error:", error);
+
+      const message =
+        error instanceof TypeError
+          ? (
+              "Немає зв’язку із сервером запису. " +
+              "Перевірте, чи запущені API та Cloudflare Tunnel."
+            )
+          : error.message;
+
+      tg?.HapticFeedback?.notificationOccurred("error");
+      showAppAlert(message);
+    } finally {
+      if (submitButton) {
+        submitButton.disabled = false;
+
+        if (submitButton.tagName === "INPUT") {
+          submitButton.value = originalButtonText || "Записатися";
+        } else {
+          submitButton.textContent =
+            originalButtonText || "Записатися";
+        }
+      }
+    }
   }
-
-  const result = {...booking, name, phone, createdAt: new Date().toISOString()};
-  localStorage.setItem("beautyStudioLastBooking", JSON.stringify(result));
-  renderClientProfile();
-  document.querySelector("#success-description").innerHTML =
-    `${name}, ваш тестовий запис на <strong>${booking.service}</strong><br>${booking.date} о ${booking.time}<br>Майстер: ${booking.master}`;
-  showScreen("success-screen");
-});
+);
 
 
-document.querySelector("#cancel-booking-button").addEventListener("click", () => {
-  if (!getSavedBooking()) return;
+document.querySelector("#cancel-booking-button").addEventListener(
+  "click",
+  () => {
+    if (!getSavedBooking()) return;
 
-  const confirmed = window.confirm(
-    "Скасувати тестовий запис?"
-  );
-
-  if (confirmed) {
-    localStorage.removeItem("beautyStudioLastBooking");
-    renderClientProfile();
+    showAppAlert(
+      "Онлайн-скасування підключимо наступним етапом. " +
+      "Поки зверніться до адміністратора салону."
+    );
   }
-});
+);
 
 document.querySelector("#repeat-booking-button").addEventListener("click", () => {
   const savedBooking = getSavedBooking();
@@ -427,10 +618,12 @@ document.querySelector("#edit-profile-name").addEventListener(
   }
 );
 
-if (window.Telegram?.WebApp) {
-  const tg = window.Telegram.WebApp;
-  tg.ready();
-  tg.expand();
+const telegramWebApp = getTelegramWebApp();
+
+if (telegramWebApp) {
+  telegramWebApp.ready();
+  telegramWebApp.expand();
   renderClientProfile();
-  document.body.style.backgroundColor = tg.themeParams.bg_color || "#f8f5f6";
+  document.body.style.backgroundColor =
+    telegramWebApp.themeParams.bg_color || "#f8f5f6";
 }
