@@ -1140,16 +1140,6 @@ document.querySelector("#address-button").addEventListener(
   () => openExternal(SALON_MAP_URL)
 );
 
-function prefillCallbackPhone() {
-  const input = document.querySelector("#callback-phone");
-  if (!input || input.value.trim()) return;
-
-  const saved = getSavedPhone() || loadSavedBooking()?.phone || "";
-  if (saved) {
-    input.value = saved;
-  }
-}
-
 document.querySelector("#save-contact-button")?.addEventListener(
   "click",
   () => {
@@ -1160,49 +1150,37 @@ document.querySelector("#save-contact-button")?.addEventListener(
 
 document.querySelector("#request-callback-button")?.addEventListener(
   "click",
-  async event => {
-    const initData = getInitData();
-    if (!initData) {
-      showAppAlert("Запит на дзвінок доступний лише всередині Telegram.");
+  event => {
+    const tg = getTelegramWebApp();
+
+    if (!tg?.requestContact) {
+      showAppAlert(
+        "Ця версія Telegram не підтримує швидку передачу номера. Оновіть Telegram або скористайтеся «Зберегти контакт»."
+      );
       return;
     }
 
     const button = event.currentTarget;
-    const phoneInput = document.querySelector("#callback-phone");
-    const phone = phoneInput?.value.trim() || "";
-
-    if (phone && phone.replace(/\D/g, "").length < 10) {
-      showAppAlert("Перевірте номер телефону.");
-      return;
-    }
-
     const oldText = button.textContent;
     button.disabled = true;
-    button.textContent = "Надсилаємо…";
+    button.textContent = "Очікуємо підтвердження…";
 
-    try {
-      await apiPost("/api/callback-request", {
-        init_data: initData,
-        client_phone: phone,
-      });
-
-      if (phone) {
-        savePhone(phone);
-      }
-
-      getTelegramWebApp()?.HapticFeedback?.notificationOccurred("success");
-      showAppAlert("Готово. Адміністратор отримав запит і передзвонить вам.");
-    } catch (error) {
-      getTelegramWebApp()?.HapticFeedback?.notificationOccurred("error");
-      showAppAlert(error.message);
-    } finally {
+    tg.requestContact(shared => {
       button.disabled = false;
       button.textContent = oldText;
-    }
+
+      if (shared) {
+        tg.HapticFeedback?.notificationOccurred("success");
+        showAppAlert(
+          "Готово. Номер передано салону — адміністратор передзвонить вам."
+        );
+      } else {
+        tg.HapticFeedback?.notificationOccurred("warning");
+      }
+    });
   }
 );
 
-prefillCallbackPhone();
 renderClientProfile();
 renderFavorites();
 
