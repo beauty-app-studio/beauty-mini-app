@@ -1002,13 +1002,14 @@ document.querySelector("#cancel-booking-button").addEventListener(
       return;
     }
 
+    const button = event.currentTarget;
+
     const confirmed = await askConfirmation(
       `Скасувати запис №${savedBooking.bookingId} на ${savedBooking.date} о ${savedBooking.time}?`
     );
 
     if (!confirmed) return;
 
-    const button = event.currentTarget;
     const oldText = button.textContent;
     button.disabled = true;
     button.textContent = "Скасовуємо…";
