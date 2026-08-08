@@ -7,7 +7,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700&family=Playfair+Display:wght@600;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="style.css?v=7">
+  <link rel="stylesheet" href="style.css?v=7.3">
 </head>
 <body>
   <main class="app-shell">
@@ -52,10 +52,10 @@
           <span class="quick-icon">📍</span>
           <span><strong>Адреса</strong><small>Київ, вул. Хрещатик, 1</small></span>
         </button>
-        <a class="quick-card" id="contacts-button" href="tel:+380671234567" style="text-decoration:none">
+        <button class="quick-card" id="contacts-button" type="button">
           <span class="quick-icon">☎️</span>
           <span><strong>Контакти</strong><small>+380 67 123 45 67</small></span>
-        </a>
+        </button>
       </section>
     </section>
 
@@ -406,7 +406,22 @@
     </nav>
   </main>
 
+
+  <div class="contact-modal" id="contact-modal" hidden>
+    <div class="contact-modal-backdrop" id="contact-modal-backdrop"></div>
+    <section class="contact-modal-card" role="dialog" aria-modal="true" aria-labelledby="contact-modal-title">
+      <button class="contact-modal-close" id="contact-modal-close" type="button" aria-label="Закрити">×</button>
+      <div class="contact-modal-icon">☎️</div>
+      <p class="eyebrow">Контакти салону</p>
+      <h3 id="contact-modal-title">Зв’язатися з нами</h3>
+      <p class="contact-modal-text">Натисніть номер для дзвінка або скопіюйте його.</p>
+      <a class="contact-phone-link" href="tel:+380671234567">+380 67 123 45 67</a>
+      <button class="primary-button contact-copy-button" id="copy-phone-button" type="button">Скопіювати номер</button>
+      <button class="secondary-button" id="contact-modal-done" type="button">Закрити</button>
+    </section>
+  </div>
+
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
-  <script src="app.js?v=7.2"></script>
+  <script src="app.js?v=7.3"></script>
 </body>
 </html>
