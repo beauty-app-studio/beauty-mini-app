@@ -1124,60 +1124,6 @@ document.querySelector("#address-button").addEventListener(
   () => openExternal(SALON_MAP_URL)
 );
 
-const contactModal = document.querySelector("#contact-modal");
-const contactsButton = document.querySelector("#contacts-button");
-const supportButton = document.querySelector("#support-button");
-const contactModalBackdrop = document.querySelector("#contact-modal-backdrop");
-const contactModalClose = document.querySelector("#contact-modal-close");
-const contactModalDone = document.querySelector("#contact-modal-done");
-const copyPhoneButton = document.querySelector("#copy-phone-button");
-
-function openContactModal() {
-  if (!contactModal) return;
-  contactModal.hidden = false;
-  requestAnimationFrame(() => contactModal.classList.add("visible"));
-}
-
-function closeContactModal() {
-  if (!contactModal) return;
-  contactModal.classList.remove("visible");
-  window.setTimeout(() => {
-    contactModal.hidden = true;
-  }, 180);
-}
-
-async function copySalonPhone() {
-  try {
-    await navigator.clipboard.writeText(SALON_PHONE);
-    showAppAlert("Номер салону скопійовано.");
-    return;
-  } catch {
-    const input = document.createElement("textarea");
-    input.value = SALON_PHONE;
-    input.setAttribute("readonly", "");
-    input.style.position = "fixed";
-    input.style.opacity = "0";
-    document.body.appendChild(input);
-    input.select();
-
-    try {
-      document.execCommand("copy");
-      showAppAlert("Номер салону скопійовано.");
-    } catch {
-      showAppAlert(`Номер салону: ${SALON_PHONE}`);
-    } finally {
-      input.remove();
-    }
-  }
-}
-
-contactsButton?.addEventListener("click", openContactModal);
-supportButton?.addEventListener("click", openContactModal);
-contactModalBackdrop?.addEventListener("click", closeContactModal);
-contactModalClose?.addEventListener("click", closeContactModal);
-contactModalDone?.addEventListener("click", closeContactModal);
-copyPhoneButton?.addEventListener("click", copySalonPhone);
-
 renderClientProfile();
 renderFavorites();
 
