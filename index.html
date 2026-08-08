@@ -7,7 +7,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700&family=Playfair+Display:wght@600;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="style.css?v=7.4">
+  <link rel="stylesheet" href="style.css?v=7.5">
 </head>
 <body>
   <main class="app-shell">
@@ -402,12 +402,25 @@
         <div class="contacts-page-icon">☎️</div>
         <p class="eyebrow">Адміністратор салону</p>
         <h3>Зв’яжіться з нами</h3>
-        <p>Телефон салону завжди буде доступний тут, навіть якщо Telegram на iPhone не відкриє системний дзвінок напряму.</p>
+        <p>Оберіть найзручніший спосіб.</p>
 
-        <a class="contact-number-card" href="tel:+380671234567">
+        <div class="contact-number-card contact-number-static">
           <span>Телефон</span>
           <strong>+380 67 123 45 67</strong>
-        </a>
+        </div>
+
+        <label class="contact-phone-field">
+          <span>Ваш номер для передзвону</span>
+          <input id="callback-phone" type="tel" inputmode="tel" placeholder="+380671234567">
+        </label>
+
+        <button class="primary-button contact-action-button" id="request-callback-button" type="button">
+          📞 Попросити передзвонити
+        </button>
+
+        <button class="secondary-button contact-action-button" id="save-contact-button" type="button">
+          👤 Зберегти контакт
+        </button>
 
         <div class="contact-info-card">
           <span>📍</span>
@@ -416,8 +429,6 @@
             <small>Київ, вул. Хрещатик, 1</small>
           </div>
         </div>
-
-        <p class="contact-hint">Якщо кнопка дзвінка не відкриється в Telegram, затисніть номер вище та скопіюйте його.</p>
 
         <button class="secondary-button" data-back>Назад</button>
       </section>
@@ -442,6 +453,6 @@
   </main>
 
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
-  <script src="app.js?v=7.4"></script>
+  <script src="app.js?v=7.5"></script>
 </body>
 </html>

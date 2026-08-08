@@ -129,6 +129,10 @@ function apiErrorMessage(status, responseData) {
   }
 
   if (status === 422) {
+    if (detail === "Phone number is required for callback request.") {
+      return "Вкажіть номер телефону, на який адміністратор зможе передзвонити.";
+    }
+
     if (detail === "This master does not provide the selected service.") {
       return "Обраний майстер не виконує цю послугу.";
     }
@@ -231,6 +235,17 @@ function saveProfileName(name) {
     "beautyStudioProfileName",
     name.trim()
   );
+}
+
+function getSavedPhone() {
+  return localStorage.getItem("beautyStudioPhone") || "";
+}
+
+function savePhone(phone) {
+  const clean = String(phone || "").trim();
+  if (clean) {
+    localStorage.setItem("beautyStudioPhone", clean);
+  }
 }
 
 function getFavorites() {
@@ -952,6 +967,7 @@ document.querySelector("#booking-form").addEventListener(
 
       saveBooking(result);
       saveProfileName(name);
+      savePhone(phone);
       renderClientProfile();
 
       document.querySelector("#success-description").innerHTML =
@@ -1124,6 +1140,69 @@ document.querySelector("#address-button").addEventListener(
   () => openExternal(SALON_MAP_URL)
 );
 
+function prefillCallbackPhone() {
+  const input = document.querySelector("#callback-phone");
+  if (!input || input.value.trim()) return;
+
+  const saved = getSavedPhone() || loadSavedBooking()?.phone || "";
+  if (saved) {
+    input.value = saved;
+  }
+}
+
+document.querySelector("#save-contact-button")?.addEventListener(
+  "click",
+  () => {
+    const contactUrl = new URL("beauty-studio.vcf", window.location.href).href;
+    openExternal(contactUrl);
+  }
+);
+
+document.querySelector("#request-callback-button")?.addEventListener(
+  "click",
+  async event => {
+    const initData = getInitData();
+    if (!initData) {
+      showAppAlert("Запит на дзвінок доступний лише всередині Telegram.");
+      return;
+    }
+
+    const button = event.currentTarget;
+    const phoneInput = document.querySelector("#callback-phone");
+    const phone = phoneInput?.value.trim() || "";
+
+    if (phone && phone.replace(/\D/g, "").length < 10) {
+      showAppAlert("Перевірте номер телефону.");
+      return;
+    }
+
+    const oldText = button.textContent;
+    button.disabled = true;
+    button.textContent = "Надсилаємо…";
+
+    try {
+      await apiPost("/api/callback-request", {
+        init_data: initData,
+        client_phone: phone,
+      });
+
+      if (phone) {
+        savePhone(phone);
+      }
+
+      getTelegramWebApp()?.HapticFeedback?.notificationOccurred("success");
+      showAppAlert("Готово. Адміністратор отримав запит і передзвонить вам.");
+    } catch (error) {
+      getTelegramWebApp()?.HapticFeedback?.notificationOccurred("error");
+      showAppAlert(error.message);
+    } finally {
+      button.disabled = false;
+      button.textContent = oldText;
+    }
+  }
+);
+
+prefillCallbackPhone();
 renderClientProfile();
 renderFavorites();
 

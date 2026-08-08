@@ -113,3 +113,10 @@ button:disabled{cursor:not-allowed;transform:none!important}
 .contact-info-card strong{color:var(--text)}
 .contact-info-card small{color:var(--muted)}
 .contact-hint{margin:4px 0 18px!important;font-size:13px}
+
+.contact-number-static{cursor:default}
+.contact-phone-field{display:grid;gap:7px;margin:0 0 12px;text-align:left}
+.contact-phone-field>span{font-size:13px;font-weight:700;color:var(--muted)}
+.contact-phone-field input{width:100%;box-sizing:border-box;padding:15px 16px;border:1px solid var(--border);border-radius:16px;background:#fff;color:var(--text);font:inherit;outline:none}
+.contact-phone-field input:focus{border-color:#c8899c;box-shadow:0 0 0 3px rgba(200,137,156,.14)}
+.contact-action-button{width:100%;margin:0 0 10px}
