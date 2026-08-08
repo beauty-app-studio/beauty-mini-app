@@ -548,6 +548,7 @@ function showScreen(id, add = true) {
 
   if (id === "favorites-screen") renderFavorites();
   if (id === "client-profile-screen") syncClientBookings();
+  if (id === "contacts-screen") prefillCallbackPhone();
 
   window.scrollTo({ top: 0, behavior: "smooth" });
 }
@@ -1140,23 +1141,77 @@ document.querySelector("#address-button").addEventListener(
   () => openExternal(SALON_MAP_URL)
 );
 
+function prefillCallbackPhone() {
+  const input = document.querySelector("#callback-phone");
+  if (!input || input.value.trim()) return;
+
+  const savedBooking = getSavedBooking();
+  const phone = getSavedPhone() || savedBooking?.phone || "";
+
+  if (phone) {
+    input.value = phone;
+  }
+}
+
 document.querySelector("#save-contact-button")?.addEventListener(
   "click",
   () => {
     const contactUrl = new URL("beauty-studio.vcf", window.location.href).href;
-    openExternal(contactUrl);
+    window.location.assign(contactUrl);
   }
 );
 
 document.querySelector("#request-callback-button")?.addEventListener(
   "click",
+  async event => {
+    const initData = getInitData();
+    const phoneInput = document.querySelector("#callback-phone");
+    const phone = phoneInput?.value.trim() || "";
+
+    if (!initData) {
+      showAppAlert("Запит на дзвінок доступний лише всередині Telegram.");
+      return;
+    }
+
+    if (phone.replace(/\D/g, "").length < 10) {
+      showAppAlert("Вкажіть номер телефону, на який вам передзвонити.");
+      phoneInput?.focus();
+      return;
+    }
+
+    const button = event.currentTarget;
+    const oldText = button.textContent;
+    button.disabled = true;
+    button.textContent = "Надсилаємо…";
+
+    try {
+      await apiPost("/api/contact/callback", {
+        init_data: initData,
+        client_phone: phone,
+      });
+
+      savePhone(phone);
+      getTelegramWebApp()?.HapticFeedback?.notificationOccurred("success");
+      showAppAlert(
+        `Готово. Адміністратор передзвонить вам на ${phone}.`
+      );
+    } catch (error) {
+      getTelegramWebApp()?.HapticFeedback?.notificationOccurred("error");
+      showAppAlert(error.message);
+    } finally {
+      button.disabled = false;
+      button.textContent = oldText;
+    }
+  }
+);
+
+document.querySelector("#telegram-phone-button")?.addEventListener(
+  "click",
   event => {
     const tg = getTelegramWebApp();
 
     if (!tg?.requestContact) {
-      showAppAlert(
-        "Ця версія Telegram не підтримує швидку передачу номера. Оновіть Telegram або скористайтеся «Зберегти контакт»."
-      );
+      showAppAlert("Ця версія Telegram не підтримує передачу номера акаунта.");
       return;
     }
 
@@ -1172,7 +1227,7 @@ document.querySelector("#request-callback-button")?.addEventListener(
       if (shared) {
         tg.HapticFeedback?.notificationOccurred("success");
         showAppAlert(
-          "Готово. Номер передано салону — адміністратор передзвонить вам."
+          "Готово. Telegram-номер передано салону."
         );
       } else {
         tg.HapticFeedback?.notificationOccurred("warning");

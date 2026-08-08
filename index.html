@@ -7,7 +7,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700&family=Playfair+Display:wght@600;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="style.css?v=7.6">
+  <link rel="stylesheet" href="style.css?v=7.7">
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
   <script>
     (function () {
@@ -425,12 +425,21 @@
         <p>Оберіть найзручніший спосіб.</p>
 
         <div class="contact-number-card contact-number-static">
-          <span>Телефон</span>
+          <span>Телефон салону</span>
           <strong>+380 67 123 45 67</strong>
         </div>
 
+        <label class="contact-phone-field">
+          <span>На який номер вам передзвонити?</span>
+          <input id="callback-phone" type="tel" inputmode="tel" autocomplete="tel" placeholder="+380671234567">
+        </label>
+
         <button class="primary-button contact-action-button" id="request-callback-button" type="button">
           📞 Попросити передзвонити
+        </button>
+
+        <button class="secondary-button contact-action-button" id="telegram-phone-button" type="button">
+          Telegram-номер
         </button>
 
         <button class="secondary-button contact-action-button" id="save-contact-button" type="button">
@@ -467,6 +476,6 @@
     </nav>
   </main>
 
-  <script src="app.js?v=7.6"></script>
+  <script src="app.js?v=7.7"></script>
 </body>
 </html>
