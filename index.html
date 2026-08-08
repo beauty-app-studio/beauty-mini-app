@@ -7,7 +7,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700&family=Playfair+Display:wght@600;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="style.css?v=3">
+  <link rel="stylesheet" href="style.css?v=7">
 </head>
 <body>
   <main class="app-shell">
@@ -17,7 +17,7 @@
           <p class="eyebrow">Telegram Mini App</p>
           <h1>Beauty Studio</h1>
         </div>
-        <button class="icon-button" aria-label="Улюблене">♡</button>
+        <button class="icon-button" id="home-favorites-button" aria-label="Улюблені майстри">♡</button>
       </header>
 
       <section class="welcome-strip">
@@ -48,11 +48,11 @@
           <span class="quick-icon">💅</span>
           <span><strong>Послуги</strong><small>Ціни й тривалість</small></span>
         </button>
-        <button class="quick-card">
+        <button class="quick-card" id="address-button">
           <span class="quick-icon">📍</span>
           <span><strong>Адреса</strong><small>Київ, вул. Хрещатик, 1</small></span>
         </button>
-        <button class="quick-card">
+        <button class="quick-card" id="contacts-button">
           <span class="quick-icon">☎️</span>
           <span><strong>Контакти</strong><small>+380 67 123 45 67</small></span>
         </button>
@@ -64,6 +64,8 @@
         <button class="back-button" data-back>←</button>
         <div><p class="eyebrow">Крок 1</p><h2>Оберіть майстра</h2></div>
       </header>
+
+      <div class="selected-chip" id="masters-filter-chip" hidden></div>
 
       <div class="master-list">
         <article class="master-card compact">
@@ -205,6 +207,7 @@
       </header>
 
       <div class="summary-card mini-summary" id="time-summary"></div>
+      <div class="time-status" id="time-status">Оберіть дату, щоб побачити вільний час.</div>
       <div class="time-grid" id="time-grid"></div>
     </section>
 
@@ -229,6 +232,19 @@
       </form>
     </section>
 
+
+
+    <section class="screen" id="favorites-screen">
+      <header class="section-header">
+        <button class="back-button" data-back>←</button>
+        <div>
+          <p class="eyebrow">Ваш список</p>
+          <h2>Улюблені майстри</h2>
+        </div>
+      </header>
+
+      <div class="favorites-list" id="favorites-list"></div>
+    </section>
 
 
     <section class="screen" id="profile-setup-screen">
@@ -298,7 +314,7 @@
       <section class="profile-dashboard-grid">
         <article class="dashboard-tile">
           <span>🎁</span>
-          <strong id="bonus-points">350</strong>
+          <strong id="bonus-points">0</strong>
           <small>бонусів</small>
         </article>
         <article class="dashboard-tile">
@@ -308,7 +324,7 @@
         </article>
         <article class="dashboard-tile">
           <span>✓</span>
-          <strong id="visit-count">1</strong>
+          <strong id="visit-count">0</strong>
           <small>візитів</small>
         </article>
       </section>
@@ -343,28 +359,28 @@
         <p class="eyebrow">Переваги</p>
         <div class="loyalty-card">
           <div>
-            <span class="loyalty-label">Beauty Club</span>
-            <h3>До подарунка залишилось 150 балів</h3>
+            <span class="loyalty-label">Beauty Club · скоро</span>
+            <h3>Програма лояльності готується</h3>
           </div>
           <div class="loyalty-progress">
-            <span></span>
+            <span style="width:0"></span>
           </div>
-          <small>Нараховуємо бонуси після кожного завершеного візиту.</small>
+          <small>Тут з’являться реальні бонуси після підключення програми лояльності.</small>
         </div>
       </section>
 
       <section class="settings-list">
-        <button>
+        <button id="favorite-masters-button">
           <span>♡</span>
           <div><strong>Улюблені майстри</strong><small>Ваш особистий список</small></div>
           <b>›</b>
         </button>
-        <button>
+        <button id="notifications-button">
           <span>🔔</span>
           <div><strong>Сповіщення</strong><small>Нагадування про записи</small></div>
           <b>›</b>
         </button>
-        <button>
+        <button id="support-button">
           <span>☎</span>
           <div><strong>Підтримка салону</strong><small>Зв’язатися з адміністратором</small></div>
           <b>›</b>
@@ -391,6 +407,6 @@
   </main>
 
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
-  <script src="app.js?v=5"></script>
+  <script src="app.js?v=7"></script>
 </body>
 </html>

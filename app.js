@@ -1,12 +1,13 @@
 
 const API_BASE_URL =
-  "https://soul-reliability-township-orbit.trycloudflare.com";
+  "https://plug-identifies-adjust-mime.trycloudflare.com";
 
 const masters = {
   nails: {
     name: "Майстер нігтьового сервісу",
     specialty: "Манікюр · Педикюр · Nail-дизайн",
     services: ["Манікюр", "Педикюр"],
+    workdays: [1, 2, 3, 4, 5, 6],
     photo: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&w=1000&q=88",
     rating: "4.9",
     experience: "7 років",
@@ -23,6 +24,7 @@ const masters = {
     name: "Стиліст-колорист",
     specialty: "Фарбування · Стрижки · Укладки",
     services: ["Фарбування", "Стрижка", "Укладка"],
+    workdays: [0, 2, 3, 4, 5, 6],
     photo: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=1000&q=88",
     rating: "4.8",
     experience: "9 років",
@@ -39,6 +41,7 @@ const masters = {
     name: "Універсальний майстер",
     specialty: "Образ · Догляд · Консультація",
     services: ["Манікюр", "Педикюр", "Фарбування", "Стрижка", "Укладка"],
+    workdays: [1, 3, 4, 5, 6],
     photo: "https://images.unsplash.com/photo-1544005313-94ddf0286df2?auto=format&fit=crop&w=1000&q=88",
     rating: "5.0",
     experience: "6 років",
@@ -53,8 +56,18 @@ const masters = {
   }
 };
 
+const SALON_PHONE = "+380671234567";
+const SALON_ADDRESS = "Київ, вул. Хрещатик, 1";
+const SALON_MAP_URL =
+  "https://www.google.com/maps/search/?api=1&query=" +
+  encodeURIComponent(SALON_ADDRESS);
+
 function getTelegramWebApp() {
   return window.Telegram?.WebApp || null;
+}
+
+function getInitData() {
+  return getTelegramWebApp()?.initData || "";
 }
 
 function showAppAlert(message) {
@@ -67,7 +80,32 @@ function showAppAlert(message) {
   }
 }
 
+function askConfirmation(message) {
+  const tg = getTelegramWebApp();
+
+  return new Promise(resolve => {
+    if (tg?.showConfirm) {
+      tg.showConfirm(message, result => resolve(Boolean(result)));
+      return;
+    }
+
+    resolve(window.confirm(message));
+  });
+}
+
+function openExternal(url) {
+  const tg = getTelegramWebApp();
+
+  if (tg?.openLink) {
+    tg.openLink(url);
+  } else {
+    window.open(url, "_blank", "noopener,noreferrer");
+  }
+}
+
 function apiErrorMessage(status, responseData) {
+  const detail = responseData?.detail;
+
   if (status === 401) {
     return (
       "Не вдалося підтвердити Telegram-сесію. " +
@@ -75,7 +113,15 @@ function apiErrorMessage(status, responseData) {
     );
   }
 
+  if (status === 404) {
+    return "Запис не знайдено або він уже недоступний.";
+  }
+
   if (status === 409) {
+    if (detail === "This booking can no longer be cancelled.") {
+      return "Цей запис уже не можна скасувати.";
+    }
+
     return (
       "Цей час щойно зайняли. Поверніться до вибору часу " +
       "та оберіть інший варіант."
@@ -83,8 +129,6 @@ function apiErrorMessage(status, responseData) {
   }
 
   if (status === 422) {
-    const detail = responseData?.detail;
-
     if (detail === "This master does not provide the selected service.") {
       return "Обраний майстер не виконує цю послугу.";
     }
@@ -96,17 +140,57 @@ function apiErrorMessage(status, responseData) {
     return "Перевірте дані запису та спробуйте ще раз.";
   }
 
-  return (
-    responseData?.detail ||
-    "Не вдалося створити запис. Спробуйте ще раз."
-  );
+  return detail || "Сталася помилка. Спробуйте ще раз.";
 }
 
-function updateServiceAvailability(masterKey) {
-  const allowedServices = masters[masterKey]?.services || [];
+async function apiPost(path, payload) {
+  let response;
+
+  try {
+    response = await fetch(`${API_BASE_URL}${path}`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(payload),
+    });
+  } catch (error) {
+    const networkError = new Error(
+      "Немає зв’язку із сервером запису. Перевірте, чи запущені API та Cloudflare Tunnel."
+    );
+    networkError.cause = error;
+    throw networkError;
+  }
+
+  let responseData = {};
+
+  try {
+    responseData = await response.json();
+  } catch {
+    responseData = {};
+  }
+
+  if (!response.ok) {
+    const error = new Error(
+      apiErrorMessage(response.status, responseData)
+    );
+    error.status = response.status;
+    error.data = responseData;
+    throw error;
+  }
+
+  return responseData;
+}
+
+function updateServiceAvailability(masterKey = null) {
+  const allowedServices = masterKey
+    ? masters[masterKey]?.services || []
+    : null;
 
   document.querySelectorAll(".service-card").forEach(card => {
-    const isAvailable = allowedServices.includes(card.dataset.service);
+    const isAvailable = !allowedServices ||
+      allowedServices.includes(card.dataset.service);
+
     card.hidden = !isAvailable;
     card.disabled = !isAvailable;
   });
@@ -114,10 +198,24 @@ function updateServiceAvailability(masterKey) {
 
 function getSavedBooking() {
   try {
-    return JSON.parse(localStorage.getItem("beautyStudioLastBooking") || "null");
+    return JSON.parse(
+      localStorage.getItem("beautyStudioLastBooking") || "null"
+    );
   } catch {
     return null;
   }
+}
+
+function saveBooking(value) {
+  if (!value) {
+    localStorage.removeItem("beautyStudioLastBooking");
+    return;
+  }
+
+  localStorage.setItem(
+    "beautyStudioLastBooking",
+    JSON.stringify(value)
+  );
 }
 
 function getTelegramUser() {
@@ -135,6 +233,23 @@ function saveProfileName(name) {
   );
 }
 
+function getFavorites() {
+  try {
+    return JSON.parse(
+      localStorage.getItem("beautyStudioFavorites") || "[]"
+    );
+  } catch {
+    return [];
+  }
+}
+
+function saveFavorites(favorites) {
+  localStorage.setItem(
+    "beautyStudioFavorites",
+    JSON.stringify(favorites)
+  );
+}
+
 function getDisplayUser() {
   const telegramUser = getTelegramUser();
   const savedName = getSavedProfileName();
@@ -143,7 +258,7 @@ function getDisplayUser() {
     name: savedName,
     username: telegramUser?.username
       ? `@${telegramUser.username}`
-      : "Telegram username з’явиться після підключення",
+      : "Telegram username відсутній",
     photo: telegramUser?.photo_url || "",
     isConfigured: Boolean(savedName),
   };
@@ -167,24 +282,63 @@ function renderAvatar(element, user) {
   if (user.photo) {
     element.innerHTML = `<img src="${user.photo}" alt="${user.name}">`;
   } else {
-    element.textContent = user.name.trim().charAt(0).toUpperCase() || "B";
+    element.textContent =
+      user.name.trim().charAt(0).toUpperCase() || "B";
   }
 }
+
+function statusLabel(status) {
+  return {
+    new: "Очікує підтвердження",
+    confirmed: "Підтверджено",
+    completed: "Завершено",
+    cancelled: "Скасовано",
+  }[status] || "Статус уточнюється";
+}
+
+function formatIsoDate(isoDate) {
+  if (!isoDate) return "";
+
+  const [year, month, day] = isoDate.split("-").map(Number);
+  if (!year || !month || !day) return isoDate;
+
+  return new Date(year, month - 1, day).toLocaleDateString("uk-UA");
+}
+
+function normalizeServerBooking(item) {
+  return {
+    master: item.master,
+    service: item.service,
+    price: item.price,
+    duration: item.duration,
+    date: formatIsoDate(item.booking_date),
+    time: item.booking_time,
+    bookingId: item.booking_id,
+    status: item.status,
+  };
+}
+
+let completedVisitCount = 0;
+let profileSyncInProgress = false;
 
 function renderClientProfile() {
   const user = getDisplayUser();
   const savedBooking = getSavedBooking();
-  const favorites = JSON.parse(
-    localStorage.getItem("beautyStudioFavorites") || "[]"
-  );
+  const favorites = getFavorites();
 
-  document.querySelector("#home-greeting").textContent =
-    greetingByTime(user.name);
-  document.querySelector("#client-profile-name").textContent =
-    user.name || "Профіль не налаштовано";
-  document.querySelector("#client-profile-username").textContent =
-    user.username;
-  document.querySelector("#favorite-count").textContent = favorites.length;
+  const greeting = document.querySelector("#home-greeting");
+  const profileName = document.querySelector("#client-profile-name");
+  const profileUsername = document.querySelector("#client-profile-username");
+  const favoriteCount = document.querySelector("#favorite-count");
+  const visitCount = document.querySelector("#visit-count");
+
+  if (greeting) greeting.textContent = greetingByTime(user.name);
+  if (profileName) {
+    profileName.textContent = user.name || "Профіль не налаштовано";
+  }
+  if (profileUsername) profileUsername.textContent = user.username;
+  if (favoriteCount) favoriteCount.textContent = favorites.length;
+  if (visitCount) visitCount.textContent = completedVisitCount;
 
   renderAvatar(document.querySelector("#home-avatar"), user);
   renderAvatar(document.querySelector("#client-avatar"), user);
@@ -192,21 +346,25 @@ function renderClientProfile() {
   const card = document.querySelector("#next-booking-card");
   const actions = document.querySelector("#profile-booking-actions");
 
+  if (!card || !actions) return;
+
   if (!savedBooking) {
     card.innerHTML = `
       <div class="empty-booking-state">
         <span>📅</span>
-        <strong>Записів поки немає</strong>
+        <strong>Активних записів немає</strong>
         <p>Оберіть майстра та зручний час.</p>
       </div>`;
     actions.style.display = "none";
     return;
   }
 
+  const status = savedBooking.status || "new";
+
   card.innerHTML = `
     <div class="booking-ticket-top">
-      <span>Beauty Studio</span>
-      <span class="status-pill">Очікує підтвердження</span>
+      <span>Заявка №${savedBooking.bookingId || "—"}</span>
+      <span class="status-pill status-${status}">${statusLabel(status)}</span>
     </div>
     <div class="booking-ticket-service">
       <h3>${savedBooking.service}</h3>
@@ -230,22 +388,153 @@ function renderClientProfile() {
         <strong>${savedBooking.price}</strong>
       </div>
     </div>`;
-  actions.style.display = "grid";
+
+  actions.style.display =
+    ["new", "confirmed"].includes(status) ? "grid" : "none";
+}
+
+async function syncClientBookings() {
+  if (profileSyncInProgress) return;
+
+  const initData = getInitData();
+  if (!initData) {
+    renderClientProfile();
+    return;
+  }
+
+  profileSyncInProgress = true;
+
+  try {
+    const data = await apiPost("/api/my-bookings", {
+      init_data: initData,
+    });
+
+    completedVisitCount = Number(data.completed_count || 0);
+
+    const firstBooking = Array.isArray(data.bookings)
+      ? data.bookings[0]
+      : null;
+
+    saveBooking(
+      firstBooking ? normalizeServerBooking(firstBooking) : null
+    );
+  } catch (error) {
+    console.warn("Profile sync error:", error);
+  } finally {
+    profileSyncInProgress = false;
+    renderClientProfile();
+  }
+}
+
+function renderFavorites() {
+  const container = document.querySelector("#favorites-list");
+  if (!container) return;
+
+  const favoriteKeys = getFavorites().filter(key => masters[key]);
+
+  if (!favoriteKeys.length) {
+    container.innerHTML = `
+      <div class="favorite-empty">
+        <span>♡</span>
+        <strong>Улюблених майстрів поки немає</strong>
+        <p>Відкрийте профіль майстра та натисніть сердечко.</p>
+      </div>`;
+    return;
+  }
+
+  container.innerHTML = favoriteKeys.map(key => {
+    const master = masters[key];
+    return `
+      <button class="favorite-card" data-favorite-master="${key}">
+        <img src="${master.photo}" alt="${master.name}">
+        <span>
+          <strong>${master.name}</strong>
+          <small>${master.specialty}</small>
+        </span>
+        <b>›</b>
+      </button>`;
+  }).join("");
+
+  container
+    .querySelectorAll("[data-favorite-master]")
+    .forEach(button => {
+      button.addEventListener("click", () => {
+        openMasterProfile(button.dataset.favoriteMaster);
+      });
+    });
 }
 
 const screens = document.querySelectorAll(".screen");
 const navItems = document.querySelectorAll(".nav-item");
 const historyStack = ["home-screen"];
-const booking = {master:"",service:"",price:"",duration:"",date:"",time:""};
+const booking = {
+  master: "",
+  masterKey: "",
+  service: "",
+  price: "",
+  duration: "",
+  date: "",
+  time: "",
+};
+
 let currentMonth = new Date();
 currentMonth.setDate(1);
 let activeMasterKey = null;
 
+function resetMasterFilter() {
+  document.querySelectorAll(".master-card").forEach(card => {
+    card.hidden = false;
+  });
+
+  const chip = document.querySelector("#masters-filter-chip");
+  if (chip) {
+    chip.hidden = true;
+    chip.textContent = "";
+  }
+}
+
+function filterMastersForService(serviceName) {
+  document.querySelectorAll(".master-card").forEach(card => {
+    const button = card.querySelector(".profile-open");
+    const key = button?.dataset.masterKey;
+    card.hidden = !key || !masters[key].services.includes(serviceName);
+  });
+
+  const chip = document.querySelector("#masters-filter-chip");
+  if (chip) {
+    chip.hidden = false;
+    chip.textContent = `Послуга: ${serviceName} · тепер оберіть майстра`;
+  }
+}
+
+function resetBookingFlow() {
+  booking.master = "";
+  booking.masterKey = "";
+  booking.service = "";
+  booking.price = "";
+  booking.duration = "";
+  booking.date = "";
+  booking.time = "";
+  activeMasterKey = null;
+}
+
 function showScreen(id, add = true) {
-  screens.forEach(s => s.classList.toggle("active", s.id === id));
-  if (add && historyStack.at(-1) !== id) historyStack.push(id);
-  navItems.forEach(i => i.classList.toggle("active-nav", i.dataset.open === id));
-  window.scrollTo({top: 0, behavior: "smooth"});
+  screens.forEach(screen => {
+    screen.classList.toggle("active", screen.id === id);
+  });
+
+  if (add && historyStack.at(-1) !== id) {
+    historyStack.push(id);
+  }
+
+  navItems.forEach(item => {
+    item.classList.toggle("active-nav", item.dataset.open === id);
+  });
+
+  if (id === "favorites-screen") renderFavorites();
+  if (id === "client-profile-screen") syncClientBookings();
+
+  window.scrollTo({ top: 0, behavior: "smooth" });
 }
 
 document.querySelectorAll("[data-open]").forEach(button => {
@@ -253,23 +542,42 @@ document.querySelectorAll("[data-open]").forEach(button => {
     const target = button.dataset.open;
 
     if (
-      target === "client-profile-screen"
-      && !getSavedProfileName()
+      target === "client-profile-screen" &&
+      !getSavedProfileName()
     ) {
       showScreen("profile-setup-screen");
       return;
     }
 
+    if (target === "masters-screen") {
+      resetBookingFlow();
+      resetMasterFilter();
+    }
+
+    if (target === "services-screen") {
+      resetBookingFlow();
+      updateServiceAvailability(null);
+      const chip = document.querySelector("#selected-master-chip");
+      if (chip) {
+        chip.textContent = "Спочатку оберіть послугу — потім майстра";
+      }
+    }
+
     showScreen(target);
   });
 });
-document.querySelectorAll("[data-back]").forEach(b => b.addEventListener("click", () => {
-  if (historyStack.length > 1) historyStack.pop();
-  showScreen(historyStack.at(-1), false);
-}));
+
+document.querySelectorAll("[data-back]").forEach(button => {
+  button.addEventListener("click", () => {
+    if (historyStack.length > 1) historyStack.pop();
+    showScreen(historyStack.at(-1), false);
+  });
+});
 
 function openMasterProfile(key) {
   const master = masters[key];
+  if (!master) return;
+
   activeMasterKey = key;
   document.querySelector("#profile-photo").src = master.photo;
   document.querySelector("#profile-name").textContent = master.name;
@@ -280,134 +588,287 @@ function openMasterProfile(key) {
   document.querySelector("#profile-about").textContent = master.about;
   document.querySelector("#profile-review").textContent = master.review;
   document.querySelector("#profile-portfolio").innerHTML = master.portfolio
-    .map(src => `<img src="${src}" alt="Робота майстра">`).join("");
-  const favorites = JSON.parse(
-    localStorage.getItem("beautyStudioFavorites") || "[]"
-  );
+    .map(src => `<img src="${src}" alt="Робота майстра">`)
+    .join("");
+
   document.querySelector("#profile-like").textContent =
-    favorites.includes(key) ? "♥" : "♡";
+    getFavorites().includes(key) ? "♥" : "♡";
 
   showScreen("master-profile-screen");
 }
 
-document.querySelectorAll(".profile-open").forEach(btn => {
-  btn.addEventListener("click", () => openMasterProfile(btn.dataset.masterKey));
+document.querySelectorAll(".profile-open").forEach(button => {
+  button.addEventListener("click", () => {
+    openMasterProfile(button.dataset.masterKey);
+  });
 });
 
-document.querySelector("#profile-like").addEventListener("click", e => {
-  const favorites = JSON.parse(
-    localStorage.getItem("beautyStudioFavorites") || "[]"
-  );
+document.querySelector("#profile-like").addEventListener("click", event => {
+  if (!activeMasterKey) return;
+
+  const favorites = getFavorites();
   const index = favorites.indexOf(activeMasterKey);
 
   if (index === -1) {
     favorites.push(activeMasterKey);
-    e.currentTarget.textContent = "♥";
+    event.currentTarget.textContent = "♥";
   } else {
     favorites.splice(index, 1);
-    e.currentTarget.textContent = "♡";
+    event.currentTarget.textContent = "♡";
   }
 
-  localStorage.setItem(
-    "beautyStudioFavorites",
-    JSON.stringify(favorites)
-  );
+  saveFavorites(favorites);
   renderClientProfile();
 });
 
 document.querySelector("#profile-book-button").addEventListener("click", () => {
   const master = masters[activeMasterKey];
+  if (!master) return;
+
   booking.master = master.name;
+  booking.masterKey = activeMasterKey;
+  booking.date = "";
+  booking.time = "";
+
+  const chip = document.querySelector("#selected-master-chip");
+  if (chip) chip.textContent = `Обрано: ${booking.master}`;
+
+  if (
+    booking.service &&
+    master.services.includes(booking.service)
+  ) {
+    document.querySelector("#date-summary").innerHTML =
+      `<strong>${booking.master}</strong><br>` +
+      `${booking.service} · ${booking.price} · ${booking.duration}`;
+    renderCalendar();
+    showScreen("date-screen");
+    return;
+  }
+
   booking.service = "";
   booking.price = "";
   booking.duration = "";
-
   updateServiceAvailability(activeMasterKey);
-
-  document.querySelector("#selected-master-chip").textContent =
-    `Обрано: ${booking.master}`;
   showScreen("services-screen");
 });
 
-document.querySelectorAll(".service-card").forEach(btn => btn.addEventListener("click", () => {
-  booking.service = btn.dataset.service;
-  booking.price = btn.dataset.price;
-  booking.duration = btn.dataset.duration;
-  document.querySelector("#date-summary").innerHTML = `<strong>${booking.master}</strong><br>${booking.service} · ${booking.price} · ${booking.duration}`;
-  renderCalendar();
-  showScreen("date-screen");
-}));
+document.querySelectorAll(".service-card").forEach(button => {
+  button.addEventListener("click", () => {
+    booking.service = button.dataset.service;
+    booking.price = button.dataset.price;
+    booking.duration = button.dataset.duration;
+    booking.date = "";
+    booking.time = "";
 
-const monthNames = ["Січень","Лютий","Березень","Квітень","Травень","Червень","Липень","Серпень","Вересень","Жовтень","Листопад","Грудень"];
+    if (!booking.master) {
+      filterMastersForService(booking.service);
+      showScreen("masters-screen");
+      return;
+    }
+
+    document.querySelector("#date-summary").innerHTML =
+      `<strong>${booking.master}</strong><br>` +
+      `${booking.service} · ${booking.price} · ${booking.duration}`;
+    renderCalendar();
+    showScreen("date-screen");
+  });
+});
+
+const monthNames = [
+  "Січень", "Лютий", "Березень", "Квітень", "Травень", "Червень",
+  "Липень", "Серпень", "Вересень", "Жовтень", "Листопад", "Грудень"
+];
+
+function isSameMonth(first, second) {
+  return first.getFullYear() === second.getFullYear() &&
+    first.getMonth() === second.getMonth();
+}
 
 function renderCalendar() {
   const grid = document.querySelector("#calendar-grid");
   grid.innerHTML = "";
-  document.querySelector("#calendar-month").textContent = `${monthNames[currentMonth.getMonth()]} ${currentMonth.getFullYear()}`;
+
+  document.querySelector("#calendar-month").textContent =
+    `${monthNames[currentMonth.getMonth()]} ${currentMonth.getFullYear()}`;
+
   const firstDay = (currentMonth.getDay() + 6) % 7;
-  const days = new Date(currentMonth.getFullYear(), currentMonth.getMonth() + 1, 0).getDate();
+  const days = new Date(
+    currentMonth.getFullYear(),
+    currentMonth.getMonth() + 1,
+    0
+  ).getDate();
+
   const today = new Date();
-  today.setHours(0,0,0,0);
+  today.setHours(0, 0, 0, 0);
 
-  for (let i = 0; i < firstDay; i++) grid.appendChild(document.createElement("span"));
+  const currentMonthStart = new Date(
+    today.getFullYear(),
+    today.getMonth(),
+    1
+  );
+  const previousButton = document.querySelector("#previous-month");
+  previousButton.disabled = isSameMonth(currentMonth, currentMonthStart);
 
-  for (let d = 1; d <= days; d++) {
-    const dateObj = new Date(currentMonth.getFullYear(), currentMonth.getMonth(), d);
-    const btn = document.createElement("button");
-    btn.className = "calendar-day";
-    btn.textContent = d;
+  for (let i = 0; i < firstDay; i += 1) {
+    grid.appendChild(document.createElement("span"));
+  }
 
-    if (dateObj < today) {
-      btn.classList.add("disabled");
-      btn.disabled = true;
+  const workdays = masters[booking.masterKey]?.workdays || [];
+
+  for (let day = 1; day <= days; day += 1) {
+    const dateObj = new Date(
+      currentMonth.getFullYear(),
+      currentMonth.getMonth(),
+      day
+    );
+    const button = document.createElement("button");
+    button.className = "calendar-day";
+    button.textContent = day;
+
+    const isPast = dateObj < today;
+    const isWorkingDay = workdays.includes(dateObj.getDay());
+
+    if (isPast || !isWorkingDay) {
+      button.classList.add("disabled");
+      button.disabled = true;
+      if (!isPast && !isWorkingDay) {
+        button.title = "Майстер цього дня не працює";
+      }
     } else {
-      btn.addEventListener("click", () => {
-        document.querySelectorAll(".calendar-day").forEach(x => x.classList.remove("selected"));
-        btn.classList.add("selected");
+      button.addEventListener("click", async () => {
+        document.querySelectorAll(".calendar-day").forEach(item => {
+          item.classList.remove("selected");
+        });
+        button.classList.add("selected");
         booking.date = dateObj.toLocaleDateString("uk-UA");
-        setTimeout(() => {
-          renderTimes();
-          showScreen("time-screen");
-        }, 180);
+        booking.time = "";
+        showScreen("time-screen");
+        await renderTimes();
       });
     }
-    grid.appendChild(btn);
+
+    grid.appendChild(button);
   }
 }
 
 document.querySelector("#previous-month").addEventListener("click", () => {
-  currentMonth.setMonth(currentMonth.getMonth() - 1);
+  const todayMonth = new Date();
+  todayMonth.setDate(1);
+  todayMonth.setHours(0, 0, 0, 0);
+
+  const candidate = new Date(currentMonth);
+  candidate.setMonth(candidate.getMonth() - 1);
+
+  if (candidate < todayMonth) return;
+
+  currentMonth = candidate;
   renderCalendar();
 });
+
 document.querySelector("#next-month").addEventListener("click", () => {
   currentMonth.setMonth(currentMonth.getMonth() + 1);
   renderCalendar();
 });
 
-function renderTimes() {
-  document.querySelector("#time-summary").innerHTML = `<strong>${booking.date}</strong><br>${booking.master}<br>${booking.service}`;
+async function renderTimes() {
+  const summary = document.querySelector("#time-summary");
   const grid = document.querySelector("#time-grid");
+  const status = document.querySelector("#time-status");
+
+  summary.innerHTML =
+    `<strong>${booking.date}</strong><br>` +
+    `${booking.master}<br>${booking.service}`;
   grid.innerHTML = "";
-  ["09:00","10:00","11:30","13:00","14:30","16:00","17:30","19:00"].forEach(t => {
-    const btn = document.createElement("button");
-    btn.className = "time-button";
-    btn.textContent = t;
-    btn.addEventListener("click", () => {
-      booking.time = t;
-      document.querySelectorAll(".time-button").forEach(x => x.classList.remove("selected"));
-      btn.classList.add("selected");
-      setTimeout(() => {
-        renderSummary();
-        showScreen("details-screen");
-      }, 180);
+  status.className = "time-status loading";
+  status.textContent = "Перевіряємо вільний час…";
+
+  const initData = getInitData();
+
+  if (!initData) {
+    status.className = "time-status warning";
+    status.textContent = "Вільний час можна перевірити лише всередині Telegram.";
+    return;
+  }
+
+  try {
+    const data = await apiPost("/api/availability", {
+      master: booking.master,
+      service: booking.service,
+      booking_date: booking.date,
+      init_data: initData,
     });
-    grid.appendChild(btn);
-  });
+
+    if (!data.workday) {
+      status.className = "time-status warning";
+      status.textContent = "Майстер цього дня не працює. Оберіть іншу дату.";
+      return;
+    }
+
+    const allSlots = Array.isArray(data.all_slots)
+      ? data.all_slots
+      : [];
+    const available = new Set(
+      Array.isArray(data.available) ? data.available : []
+    );
+
+    if (!allSlots.length) {
+      status.className = "time-status warning";
+      status.textContent = "На цю дату немає доступного часу.";
+      return;
+    }
+
+    allSlots.forEach(time => {
+      const button = document.createElement("button");
+      const isAvailable = available.has(time);
+
+      button.className = isAvailable
+        ? "time-button available"
+        : "time-button busy";
+      button.innerHTML = isAvailable
+        ? `<strong>${time}</strong><small>Вільно</small>`
+        : `<strong>${time}</strong><small>Зайнято</small>`;
+
+      if (!isAvailable) {
+        button.disabled = true;
+      } else {
+        button.addEventListener("click", () => {
+          booking.time = time;
+          document.querySelectorAll(".time-button").forEach(item => {
+            item.classList.remove("selected");
+          });
+          button.classList.add("selected");
+          renderSummary();
+          showScreen("details-screen");
+        });
+      }
+
+      grid.appendChild(button);
+    });
+
+    if (available.size) {
+      status.className = "time-status success";
+      status.textContent =
+        `Вільних варіантів: ${available.size}. Зайнятий час позначено сірим.`;
+    } else {
+      status.className = "time-status warning";
+      status.textContent = "Усі доступні години вже зайняті. Оберіть іншу дату.";
+    }
+  } catch (error) {
+    console.error("Availability API error:", error);
+    status.className = "time-status warning";
+    status.textContent = "Не вдалося завантажити актуальний розклад.";
+    showAppAlert(error.message);
+  }
 }
 
 function renderSummary() {
   document.querySelector("#booking-summary").innerHTML =
-    `<strong>${booking.service}</strong><br>👩‍🎨 ${booking.master}<br>📅 ${booking.date}<br>🕒 ${booking.time}<br>💰 ${booking.price}<br>⏳ ${booking.duration}`;
+    `<strong>${booking.service}</strong><br>` +
+    `👩‍🎨 ${booking.master}<br>` +
+    `📅 ${booking.date}<br>` +
+    `🕒 ${booking.time}<br>` +
+    `💰 ${booking.price}<br>` +
+    `⏳ ${booking.duration}`;
 
   const profileName = getSavedProfileName();
   const nameInput = document.querySelector("#client-name");
@@ -430,7 +891,7 @@ document.querySelector("#booking-form").addEventListener(
     const name = document.querySelector("#client-name").value.trim();
     const phone = document.querySelector("#client-phone").value.trim();
     const tg = getTelegramWebApp();
-    const initData = tg?.initData || "";
+    const initData = getInitData();
 
     if (name.length < 2 || phone.replace(/\D/g, "").length < 10) {
       showAppAlert("Перевірте ім’я та номер телефону");
@@ -470,38 +931,15 @@ document.querySelector("#booking-form").addEventListener(
     }
 
     try {
-      const response = await fetch(
-        `${API_BASE_URL}/api/bookings`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            client_name: name,
-            client_phone: phone,
-            service: booking.service,
-            master: booking.master,
-            booking_date: booking.date,
-            booking_time: booking.time,
-            init_data: initData,
-          }),
-        }
-      );
-
-      let responseData = {};
-
-      try {
-        responseData = await response.json();
-      } catch {
-        responseData = {};
-      }
-
-      if (!response.ok) {
-        throw new Error(
-          apiErrorMessage(response.status, responseData)
-        );
-      }
+      const responseData = await apiPost("/api/bookings", {
+        client_name: name,
+        client_phone: phone,
+        service: booking.service,
+        master: booking.master,
+        booking_date: booking.date,
+        booking_time: booking.time,
+        init_data: initData,
+      });
 
       const result = {
         ...booking,
@@ -512,10 +950,7 @@ document.querySelector("#booking-form").addEventListener(
         createdAt: new Date().toISOString(),
       };
 
-      localStorage.setItem(
-        "beautyStudioLastBooking",
-        JSON.stringify(result)
-      );
+      saveBooking(result);
       saveProfileName(name);
       renderClientProfile();
 
@@ -529,17 +964,13 @@ document.querySelector("#booking-form").addEventListener(
       showScreen("success-screen");
     } catch (error) {
       console.error("Booking API error:", error);
-
-      const message =
-        error instanceof TypeError
-          ? (
-              "Немає зв’язку із сервером запису. " +
-              "Перевірте, чи запущені API та Cloudflare Tunnel."
-            )
-          : error.message;
-
       tg?.HapticFeedback?.notificationOccurred("error");
-      showAppAlert(message);
+      showAppAlert(error.message);
+
+      if (error.status === 409) {
+        showScreen("time-screen");
+        await renderTimes();
+      }
     } finally {
       if (submitButton) {
         submitButton.disabled = false;
@@ -555,40 +986,90 @@ document.querySelector("#booking-form").addEventListener(
   }
 );
 
-
 document.querySelector("#cancel-booking-button").addEventListener(
   "click",
-  () => {
-    if (!getSavedBooking()) return;
+  async event => {
+    const savedBooking = getSavedBooking();
+    const initData = getInitData();
 
-    showAppAlert(
-      "Онлайн-скасування підключимо наступним етапом. " +
-      "Поки зверніться до адміністратора салону."
+    if (!savedBooking?.bookingId) {
+      showAppAlert("Активний запис не знайдено.");
+      return;
+    }
+
+    if (!initData) {
+      showAppAlert("Скасування доступне лише всередині Telegram.");
+      return;
+    }
+
+    const confirmed = await askConfirmation(
+      `Скасувати запис №${savedBooking.bookingId} на ${savedBooking.date} о ${savedBooking.time}?`
     );
+
+    if (!confirmed) return;
+
+    const button = event.currentTarget;
+    const oldText = button.textContent;
+    button.disabled = true;
+    button.textContent = "Скасовуємо…";
+
+    try {
+      await apiPost(`/api/bookings/${savedBooking.bookingId}/cancel`, {
+        init_data: initData,
+      });
+
+      saveBooking(null);
+      getTelegramWebApp()?.HapticFeedback?.notificationOccurred("success");
+      await syncClientBookings();
+      showAppAlert("Запис скасовано. Адміністратор уже отримав повідомлення.");
+    } catch (error) {
+      getTelegramWebApp()?.HapticFeedback?.notificationOccurred("error");
+      showAppAlert(error.message);
+      await syncClientBookings();
+    } finally {
+      button.disabled = false;
+      button.textContent = oldText;
+    }
   }
 );
 
-document.querySelector("#repeat-booking-button").addEventListener("click", () => {
-  const savedBooking = getSavedBooking();
-  if (!savedBooking) return;
+document.querySelector("#repeat-booking-button").addEventListener(
+  "click",
+  () => {
+    const savedBooking = getSavedBooking();
+    if (!savedBooking) return;
 
-  booking.master = savedBooking.master;
-  booking.service = savedBooking.service;
-  booking.price = savedBooking.price;
-  booking.duration = savedBooking.duration;
+    const masterEntry = Object.entries(masters).find(
+      ([, master]) => master.name === savedBooking.master
+    );
 
-  document.querySelector("#selected-master-chip").textContent =
-    `Обрано: ${booking.master}`;
-  document.querySelector("#date-summary").innerHTML =
-    `<strong>${booking.master}</strong><br>` +
-    `${booking.service} · ${booking.price} · ${booking.duration}`;
+    if (!masterEntry) {
+      showAppAlert("Не вдалося знайти майстра для повторного запису.");
+      return;
+    }
 
-  renderCalendar();
-  showScreen("date-screen");
-});
+    const [masterKey] = masterEntry;
+    activeMasterKey = masterKey;
+    booking.masterKey = masterKey;
+    booking.master = savedBooking.master;
+    booking.service = savedBooking.service;
+    booking.price = savedBooking.price;
+    booking.duration = savedBooking.duration;
+    booking.date = "";
+    booking.time = "";
 
-renderClientProfile();
+    document.querySelector("#selected-master-chip").textContent =
+      `Обрано: ${booking.master}`;
+    document.querySelector("#date-summary").innerHTML =
+      `<strong>${booking.master}</strong><br>` +
+      `${booking.service} · ${booking.price} · ${booking.duration}`;
 
+    currentMonth = new Date();
+    currentMonth.setDate(1);
+    renderCalendar();
+    showScreen("date-screen");
+  }
+);
 
 document.querySelector("#profile-setup-form").addEventListener(
   "submit",
@@ -599,7 +1080,7 @@ document.querySelector("#profile-setup-form").addEventListener(
     const name = input.value.trim();
 
     if (name.length < 2) {
-      alert("Введіть ім’я щонайменше з двох символів");
+      showAppAlert("Введіть ім’я щонайменше з двох символів");
       return;
     }
 
@@ -618,12 +1099,68 @@ document.querySelector("#edit-profile-name").addEventListener(
   }
 );
 
+document.querySelector("#home-favorites-button").addEventListener(
+  "click",
+  () => showScreen("favorites-screen")
+);
+
+document.querySelector("#favorite-masters-button").addEventListener(
+  "click",
+  () => showScreen("favorites-screen")
+);
+
+document.querySelector("#notifications-button").addEventListener(
+  "click",
+  () => {
+    showAppAlert(
+      "Підтвердження та зміни запису вже приходять у Telegram. Автоматичні нагадування перед візитом додамо окремим етапом."
+    );
+  }
+);
+
+document.querySelector("#address-button").addEventListener(
+  "click",
+  () => openExternal(SALON_MAP_URL)
+);
+
+document.querySelector("#contacts-button").addEventListener(
+  "click",
+  () => {
+    window.location.href = `tel:${SALON_PHONE}`;
+  }
+);
+
+document.querySelector("#support-button").addEventListener(
+  "click",
+  () => {
+    window.location.href = `tel:${SALON_PHONE}`;
+  }
+);
+
+renderClientProfile();
+renderFavorites();
+
 const telegramWebApp = getTelegramWebApp();
 
 if (telegramWebApp) {
   telegramWebApp.ready();
   telegramWebApp.expand();
-  renderClientProfile();
-  document.body.style.backgroundColor =
-    telegramWebApp.themeParams.bg_color || "#f8f5f6";
+
+  try {
+    telegramWebApp.setHeaderColor?.("#f8f5f6");
+    telegramWebApp.setBackgroundColor?.("#f8f5f6");
+  } catch {
+    // Старі версії Telegram можуть не підтримувати ці методи.
+  }
+
+  document.body.style.backgroundColor = "#f8f5f6";
+  syncClientBookings();
 }
+
+window.addEventListener("focus", () => {
+  syncClientBookings();
+});
+
+document.addEventListener("visibilitychange", () => {
+  if (!document.hidden) syncClientBookings();
+});

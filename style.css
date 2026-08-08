@@ -64,3 +64,38 @@
 .setup-card input:focus{border-color:var(--accent);box-shadow:0 0 0 4px rgba(255,79,135,.11)}
 .privacy-note{display:block;margin-top:5px;color:var(--muted);line-height:1.55}
 .edit-profile-name{position:absolute;right:16px;bottom:14px;border:0;background:transparent;color:var(--accent-dark);font-size:11px;font-weight:700;cursor:pointer}
+
+/* v6: contrast, availability and interactive states */
+html{color-scheme:light;background:#f8f5f6}
+body{background:radial-gradient(circle at top right,#ffe3ec 0,transparent 35%),#f8f5f6!important;color:#272326!important}
+.topbar h1,.welcome-strip h2,.section-header h2{color:#272326}
+.welcome-strip{padding:16px 16px;border:1px solid #efdfe5;border-radius:22px;background:linear-gradient(135deg,rgba(255,255,255,.98),rgba(255,241,245,.96));box-shadow:0 10px 26px rgba(85,45,61,.06)}
+.welcome-strip .eyebrow{color:#d93e72}
+.icon-button{background:#fff;color:#d93e72}
+button:disabled{cursor:not-allowed;transform:none!important}
+.calendar-title button:disabled{opacity:.35;cursor:not-allowed}
+.calendar-day.disabled{opacity:.5}
+.service-card:disabled{opacity:.45;cursor:not-allowed}
+.time-status{margin:0 0 12px;padding:12px 14px;border:1px solid var(--border);border-radius:14px;background:rgba(255,255,255,.78);color:var(--muted);font-size:13px;line-height:1.45}
+.time-status.loading{background:var(--soft);color:var(--accent-dark)}
+.time-status.success{background:#eef9f3;color:#26714c;border-color:#cfe9db}
+.time-status.warning{background:#fff5f6;color:#a9475d;border-color:#f2d2da}
+.time-button{min-height:62px;display:grid;place-items:center;gap:2px;padding:10px 6px}
+.time-button strong{font-size:14px}
+.time-button small{font-size:10px;color:var(--muted);font-weight:600}
+.time-button.busy{border-color:#eadfe3;background:#f2edef;color:#a79ba0;opacity:.78}
+.time-button.busy small{color:#b66b7f}
+.time-button.available small{color:#3d8b67}
+.time-button.selected small{color:rgba(255,255,255,.86)}
+.master-card[hidden],.service-card[hidden]{display:none!important}
+.favorites-list{display:grid;gap:14px}
+.favorite-card{width:100%;padding:14px;display:grid;grid-template-columns:76px 1fr auto;align-items:center;gap:14px;border:1px solid var(--border);border-radius:22px;background:#fff;color:var(--text);text-align:left;box-shadow:0 10px 24px rgba(60,30,43,.06);cursor:pointer}
+.favorite-card img{width:76px;height:76px;border-radius:18px;object-fit:cover}
+.favorite-card strong,.favorite-card small{display:block}
+.favorite-card small{margin-top:5px;color:var(--muted);line-height:1.4}
+.favorite-card b{color:var(--accent);font-size:22px}
+.favorite-empty{padding:34px 20px;border:1px solid var(--border);border-radius:24px;background:#fff;text-align:center;color:var(--muted)}
+.favorite-empty span{display:block;margin-bottom:10px;font-size:34px}
+.status-pill.status-confirmed{background:#dff5e8;color:#236b47}
+.status-pill.status-new{background:#fff0bd;color:#7f6300}
+.booking-sync-note{margin:10px 0 0;color:var(--muted);font-size:12px;line-height:1.45}
