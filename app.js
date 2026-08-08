@@ -1124,13 +1124,6 @@ document.querySelector("#address-button").addEventListener(
   () => openExternal(SALON_MAP_URL)
 );
 
-document.querySelector("#contacts-button").addEventListener(
-  "click",
-  () => {
-    window.location.href = `tel:${SALON_PHONE}`;
-  }
-);
-
 document.querySelector("#support-button").addEventListener(
   "click",
   () => {
