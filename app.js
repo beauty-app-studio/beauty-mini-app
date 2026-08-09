@@ -417,7 +417,85 @@ async function syncClientBookings() {
 
   const initData = getInitData();
   if (!initData) {
-    renderClientProfile();
+    
+const formFieldSelector =
+  'input:not([type="hidden"]), textarea, select, [contenteditable="true"]';
+
+let keyboardAdjustFrame = null;
+
+function isFormField(element) {
+  return Boolean(element?.matches?.(formFieldSelector));
+}
+
+function keepFocusedFieldVisible() {
+  const field = document.activeElement;
+  if (!isFormField(field)) return;
+
+  const viewport = window.visualViewport;
+  const viewportTop = viewport?.offsetTop || 0;
+  const viewportHeight = viewport?.height || window.innerHeight;
+
+  const rect = field.getBoundingClientRect();
+  const safeTop = viewportTop + 74;
+  const safeBottom = viewportTop + viewportHeight - 22;
+
+  let delta = 0;
+
+  if (rect.bottom > safeBottom) {
+    delta = rect.bottom - safeBottom + 12;
+  } else if (rect.top < safeTop) {
+    delta = rect.top - safeTop - 10;
+  }
+
+  if (Math.abs(delta) > 1) {
+    window.scrollBy({
+      top: delta,
+      behavior: "smooth",
+    });
+  }
+}
+
+function scheduleFocusedFieldAdjustment() {
+  if (keyboardAdjustFrame) {
+    cancelAnimationFrame(keyboardAdjustFrame);
+  }
+
+  keyboardAdjustFrame = requestAnimationFrame(() => {
+    keyboardAdjustFrame = null;
+    keepFocusedFieldVisible();
+  });
+}
+
+document.addEventListener("focusin", event => {
+  if (!isFormField(event.target)) return;
+
+  document.body.classList.add("keyboard-open");
+
+  setTimeout(scheduleFocusedFieldAdjustment, 80);
+  setTimeout(scheduleFocusedFieldAdjustment, 260);
+});
+
+document.addEventListener("focusout", () => {
+  setTimeout(() => {
+    if (!isFormField(document.activeElement)) {
+      document.body.classList.remove("keyboard-open");
+    }
+  }, 120);
+});
+
+if (window.visualViewport) {
+  window.visualViewport.addEventListener(
+    "resize",
+    scheduleFocusedFieldAdjustment
+  );
+  window.visualViewport.addEventListener(
+    "scroll",
+    scheduleFocusedFieldAdjustment
+  );
+}
+
+
+renderClientProfile();
     return;
   }
 
@@ -537,6 +615,41 @@ function resetBookingFlow() {
   activeMasterKey = null;
 }
 
+function setProfileSetupMode(mode = "first") {
+  const isEdit = mode === "edit";
+
+  const eyebrow = document.querySelector("#profile-setup-eyebrow");
+  const title = document.querySelector("#profile-setup-title");
+  const question = document.querySelector("#profile-setup-question");
+  const description = document.querySelector("#profile-setup-description");
+  const submit = document.querySelector("#profile-setup-submit");
+
+  if (eyebrow) {
+    eyebrow.textContent = isEdit ? "Редагування профілю" : "Перший вхід";
+  }
+
+  if (title) {
+    title.textContent = isEdit ? "Змінити ім’я" : "Налаштуємо профіль";
+  }
+
+  if (question) {
+    question.textContent = isEdit
+      ? "Як до вас звертатися?"
+      : "Як до вас звертатися?";
+  }
+
+  if (description) {
+    description.textContent = isEdit
+      ? "Оновіть ім’я або зручну форму звертання. Telegram username і фото залишаться без змін."
+      : "Вкажіть справжнє ім’я або зручну форму звертання. Це ім’я належатиме саме профілю і не змінюватиметься через нові або скасовані записи.";
+  }
+
+  if (submit) {
+    submit.textContent = isEdit ? "Зберегти зміни" : "Зберегти профіль";
+  }
+}
+
+
 function showScreen(id, add = true) {
   screens.forEach(screen => {
     screen.classList.toggle("active", screen.id === id);
@@ -565,6 +678,8 @@ document.querySelectorAll("[data-open]").forEach(button => {
       target === "client-profile-screen" &&
       !getSavedProfileName()
     ) {
+      setProfileSetupMode("first");
+      document.querySelector("#profile-name-input").value = "";
       showScreen("profile-setup-screen");
       return;
     }
@@ -1115,6 +1230,7 @@ document.querySelector("#profile-setup-form").addEventListener(
 document.querySelector("#edit-profile-name").addEventListener(
   "click",
   () => {
+    setProfileSetupMode("edit");
     document.querySelector("#profile-name-input").value =
       getSavedProfileName();
     showScreen("profile-setup-screen");

@@ -123,3 +123,25 @@ button:disabled{cursor:not-allowed;transform:none!important}
 .contact-phone-field input:focus{border-color:#c8899c;box-shadow:0 0 0 3px rgba(200,137,156,.14)}
 
 #telegram-phone-button{font-size:14px}
+
+
+/* v7.9: iOS/Telegram keyboard UX */
+body.keyboard-open .bottom-nav{
+  opacity:0;
+  visibility:hidden;
+  pointer-events:none;
+  transform:translate(-50%,18px);
+}
+body.keyboard-open .app-shell{
+  padding-bottom:24px;
+}
+body.keyboard-open .screen.active{
+  min-height:auto;
+}
+.bottom-nav{
+  transition:opacity .18s ease, transform .18s ease, visibility .18s ease;
+}
+input,textarea,select,[contenteditable="true"]{
+  scroll-margin-top:84px;
+  scroll-margin-bottom:28px;
+}

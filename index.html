@@ -7,7 +7,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700&family=Playfair+Display:wght@600;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="style.css?v=7.8">
+  <link rel="stylesheet" href="style.css?v=7.9">
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
   <script>
     (function () {
@@ -271,15 +271,15 @@
       <header class="section-header">
         <button class="back-button" data-back>←</button>
         <div>
-          <p class="eyebrow">Перший вхід</p>
-          <h2>Налаштуємо профіль</h2>
+          <p class="eyebrow" id="profile-setup-eyebrow">Перший вхід</p>
+          <h2 id="profile-setup-title">Налаштуємо профіль</h2>
         </div>
       </header>
 
       <section class="setup-card">
         <div class="setup-icon">🌸</div>
-        <h3>Як до вас звертатися?</h3>
-        <p>
+        <h3 id="profile-setup-question">Як до вас звертатися?</h3>
+        <p id="profile-setup-description">
           Вкажіть справжнє ім’я або зручну форму звертання.
           Це ім’я належатиме саме профілю і не змінюватиметься
           через нові або скасовані записи.
@@ -298,7 +298,7 @@
             >
           </label>
 
-          <button class="primary-button" type="submit">
+          <button class="primary-button" id="profile-setup-submit" type="submit">
             Зберегти профіль
           </button>
         </form>
@@ -476,6 +476,6 @@
     </nav>
   </main>
 
-  <script src="app.js?v=7.8.1"></script>
+  <script src="app.js?v=7.9"></script>
 </body>
 </html>
