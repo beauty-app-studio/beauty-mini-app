@@ -1,6 +1,6 @@
 
 const API_BASE_URL =
-  "https://mode-observer-course-procedure.trycloudflare.com";
+  "https://housewares-inspections-handling-votes.trycloudflare.com";
 
 const masters = {
   nails: {
