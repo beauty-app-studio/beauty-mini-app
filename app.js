@@ -1,6 +1,6 @@
 
 const API_BASE_URL =
-  "https://plug-identifies-adjust-mime.trycloudflare.com";
+  "https://mode-observer-course-procedure.trycloudflare.com";
 
 const masters = {
   nails: {
