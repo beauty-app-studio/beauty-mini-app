@@ -144,6 +144,10 @@ function apiErrorMessage(status, responseData) {
     return "Перевірте дані запису та спробуйте ще раз.";
   }
 
+  if (status === 503 && detail === "Could not send salon contact.") {
+    return "Не вдалося надіслати контакт у Telegram. Спробуйте ще раз.";
+  }
+
   return detail || "Сталася помилка. Спробуйте ще раз.";
 }
 
@@ -1155,9 +1159,42 @@ function prefillCallbackPhone() {
 
 document.querySelector("#save-contact-button")?.addEventListener(
   "click",
-  () => {
-    const contactUrl = new URL("beauty-studio.vcf", window.location.href).href;
-    window.location.assign(contactUrl);
+  async event => {
+    const initData = getInitData();
+
+    if (!initData) {
+      showAppAlert("Збереження контакту доступне лише всередині Telegram.");
+      return;
+    }
+
+    const button = event.currentTarget;
+    const oldText = button.textContent;
+    button.disabled = true;
+    button.textContent = "Надсилаємо контакт…";
+
+    try {
+      await apiPost("/api/contact/save", {
+        init_data: initData,
+      });
+
+      const tg = getTelegramWebApp();
+      tg?.HapticFeedback?.notificationOccurred("success");
+
+      const message =
+        "Контакт Beauty Studio надіслано в чат з ботом. " +
+        "Натисніть на картку контакту, щоб додати її в телефон.";
+
+      if (tg?.showAlert) {
+        tg.showAlert(message, () => tg.close());
+      } else {
+        window.alert(message);
+      }
+    } catch (error) {
+      getTelegramWebApp()?.HapticFeedback?.notificationOccurred("error");
+      showAppAlert(error.message);
+      button.disabled = false;
+      button.textContent = oldText;
+    }
   }
 );
 
