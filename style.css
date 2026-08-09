@@ -145,3 +145,28 @@ input,textarea,select,[contenteditable="true"]{
   scroll-margin-top:84px;
   scroll-margin-bottom:28px;
 }
+
+
+/* v7.10: compact edit mode while the phone keyboard is open */
+body.keyboard-open .bottom-nav{
+  display:none !important;
+}
+body.keyboard-open #profile-setup-screen.active .section-header{
+  display:none;
+}
+body.keyboard-open #profile-setup-screen.active .setup-card{
+  margin-top:12px;
+  padding-top:18px;
+  padding-bottom:18px;
+}
+body.keyboard-open #profile-setup-screen.active .setup-icon,
+body.keyboard-open #profile-setup-screen.active #profile-setup-question,
+body.keyboard-open #profile-setup-screen.active #profile-setup-description{
+  display:none;
+}
+body.keyboard-open #profile-setup-screen.active #profile-setup-form{
+  margin-top:0;
+}
+body.keyboard-open #profile-setup-screen.active #profile-name-input{
+  font-size:16px;
+}
