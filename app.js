@@ -1315,55 +1315,6 @@ document.querySelector("#telegram-phone-button")?.addEventListener(
 );
 
 
-/* v7.10: Telegram/iPhone keyboard focus handling */
-const keyboardFieldSelector =
-  'input:not([type="hidden"]), textarea, select, [contenteditable="true"]';
-
-function isKeyboardField(element) {
-  return Boolean(element?.matches?.(keyboardFieldSelector));
-}
-
-function focusFieldIntoView(field = document.activeElement) {
-  if (!isKeyboardField(field)) return;
-
-  try {
-    field.scrollIntoView({
-      behavior: "smooth",
-      block: "center",
-      inline: "nearest",
-    });
-  } catch {
-    field.scrollIntoView();
-  }
-}
-
-function scheduleKeyboardFocus(field) {
-  setTimeout(() => focusFieldIntoView(field), 80);
-  setTimeout(() => focusFieldIntoView(field), 260);
-  setTimeout(() => focusFieldIntoView(field), 520);
-}
-
-document.addEventListener("focusin", event => {
-  if (!isKeyboardField(event.target)) return;
-
-  document.body.classList.add("keyboard-open");
-  scheduleKeyboardFocus(event.target);
-});
-
-document.addEventListener("focusout", () => {
-  setTimeout(() => {
-    if (!isKeyboardField(document.activeElement)) {
-      document.body.classList.remove("keyboard-open");
-    }
-  }, 180);
-});
-
-if (window.visualViewport) {
-  window.visualViewport.addEventListener("resize", () => {
-    if (!document.body.classList.contains("keyboard-open")) return;
-    focusFieldIntoView();
-  });
-}
 
 renderClientProfile();
 renderFavorites();

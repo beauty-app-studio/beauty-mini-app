@@ -125,48 +125,46 @@ button:disabled{cursor:not-allowed;transform:none!important}
 #telegram-phone-button{font-size:14px}
 
 
-/* v7.9: iOS/Telegram keyboard UX */
-body.keyboard-open .bottom-nav{
-  opacity:0;
-  visibility:hidden;
-  pointer-events:none;
-  transform:translate(-50%,18px);
-}
-body.keyboard-open .app-shell{
-  padding-bottom:24px;
-}
-body.keyboard-open .screen.active{
-  min-height:auto;
-}
-.bottom-nav{
-  transition:opacity .18s ease, transform .18s ease, visibility .18s ease;
-}
-input,textarea,select,[contenteditable="true"]{
-  scroll-margin-top:84px;
-  scroll-margin-bottom:28px;
-}
 
 
-/* v7.10: compact edit mode while the phone keyboard is open */
-body.keyboard-open .bottom-nav{
+/* v7.11: iPhone/Telegram keyboard — CSS focus mode, no JS scrolling */
+#profile-setup-screen:focus-within .section-header{
   display:none !important;
 }
-body.keyboard-open #profile-setup-screen.active .section-header{
-  display:none;
+
+#profile-setup-screen:focus-within .setup-card{
+  margin-top:10px !important;
+  padding:18px !important;
 }
-body.keyboard-open #profile-setup-screen.active .setup-card{
-  margin-top:12px;
-  padding-top:18px;
-  padding-bottom:18px;
+
+#profile-setup-screen:focus-within .setup-icon,
+#profile-setup-screen:focus-within #profile-setup-question,
+#profile-setup-screen:focus-within #profile-setup-description{
+  display:none !important;
 }
-body.keyboard-open #profile-setup-screen.active .setup-icon,
-body.keyboard-open #profile-setup-screen.active #profile-setup-question,
-body.keyboard-open #profile-setup-screen.active #profile-setup-description{
-  display:none;
+
+#profile-setup-screen:focus-within #profile-setup-form{
+  margin-top:0 !important;
 }
-body.keyboard-open #profile-setup-screen.active #profile-setup-form{
-  margin-top:0;
+
+#profile-setup-screen:focus-within #profile-name-input{
+  font-size:16px !important;
+  scroll-margin-top:24px;
+  scroll-margin-bottom:24px;
 }
-body.keyboard-open #profile-setup-screen.active #profile-name-input{
-  font-size:16px;
+
+body:has(#profile-name-input:focus) .bottom-nav{
+  display:none !important;
+}
+
+body:has(#profile-name-input:focus) .app-shell{
+  padding-bottom:12px !important;
+}
+
+body:has(#profile-name-input:focus) #profile-setup-screen.active{
+  min-height:var(--tg-viewport-stable-height, 100vh) !important;
+  padding-top:8px !important;
+  padding-bottom:calc(env(safe-area-inset-bottom) + 12px) !important;
+  overflow-y:auto !important;
+  overscroll-behavior:contain;
 }
