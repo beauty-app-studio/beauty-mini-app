@@ -168,3 +168,298 @@ body:has(#profile-name-input:focus) #profile-setup-screen.active{
   overflow-y:auto !important;
   overscroll-behavior:contain;
 }
+
+
+/* v7.12: polished final booking flow */
+.booking-review{
+  padding:18px;
+  border:1px solid var(--border);
+  border-radius:26px;
+  background:linear-gradient(145deg,#fff 0%,#fff8fa 100%);
+  box-shadow:0 14px 34px rgba(60,30,43,.07);
+}
+
+.booking-review-heading{
+  display:flex;
+  align-items:flex-start;
+  justify-content:space-between;
+  gap:12px;
+  padding-bottom:15px;
+  border-bottom:1px solid var(--border);
+}
+
+.booking-review-heading h3{
+  margin:0;
+  font-size:21px;
+}
+
+.review-badge{
+  flex:0 0 auto;
+  padding:8px 10px;
+  border-radius:999px;
+  background:var(--soft);
+  color:var(--accent-dark);
+  font-size:11px;
+  font-weight:700;
+}
+
+.booking-review-grid{
+  padding-top:5px;
+}
+
+.review-main-row{
+  display:grid;
+  grid-template-columns:42px 1fr auto;
+  align-items:center;
+  gap:12px;
+  padding:15px 0;
+  border-bottom:1px solid var(--border);
+}
+
+.review-service-icon{
+  width:42px;
+  height:42px;
+  display:grid;
+  place-items:center;
+  border-radius:14px;
+  background:var(--soft);
+  color:var(--accent-dark);
+  font-size:20px;
+}
+
+.review-main-row small,
+.success-ticket-top small{
+  display:block;
+  margin-bottom:3px;
+  color:var(--muted);
+  font-size:11px;
+}
+
+.review-main-row strong{
+  display:block;
+}
+
+.review-price,
+.success-ticket-price{
+  color:var(--accent-dark);
+  white-space:nowrap;
+}
+
+.review-detail-row,
+.success-ticket-row{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  gap:18px;
+  padding:12px 0;
+  border-bottom:1px solid #f1e8eb;
+  font-size:14px;
+}
+
+.review-detail-row:last-child,
+.success-ticket-row:last-child{
+  border-bottom:0;
+}
+
+.review-detail-row span,
+.success-ticket-row span{
+  color:var(--muted);
+}
+
+.review-detail-row strong,
+.success-ticket-row strong{
+  text-align:right;
+  font-size:14px;
+}
+
+.booking-form-final{
+  margin-top:14px;
+}
+
+.form-heading{
+  margin-bottom:18px;
+}
+
+.form-heading strong{
+  display:block;
+  margin-bottom:5px;
+  font-size:17px;
+}
+
+.form-heading small{
+  color:var(--muted);
+  line-height:1.5;
+}
+
+.booking-confirm-note{
+  display:flex;
+  align-items:flex-start;
+  gap:10px;
+  margin:2px 0 4px;
+  padding:13px 14px;
+  border-radius:16px;
+  background:#fff6f9;
+  color:var(--muted);
+}
+
+.booking-confirm-note>span{
+  width:24px;
+  height:24px;
+  flex:0 0 24px;
+  display:grid;
+  place-items:center;
+  border-radius:50%;
+  background:#ffe2ec;
+  color:var(--accent-dark);
+  font-weight:800;
+}
+
+.booking-confirm-note p{
+  margin:1px 0 0;
+  font-size:12px;
+  line-height:1.5;
+}
+
+.booking-submit-button{
+  margin-bottom:0;
+}
+
+/* Keep the contact fields usable above the iPhone Telegram keyboard. */
+#details-screen:focus-within .section-header{
+  display:none !important;
+}
+
+#details-screen:focus-within .booking-review{
+  padding:10px 14px !important;
+}
+
+#details-screen:focus-within .booking-review-heading,
+#details-screen:focus-within .review-detail-row{
+  display:none !important;
+}
+
+#details-screen:focus-within .review-main-row{
+  padding:4px 0 10px;
+  border-bottom:0;
+}
+
+#details-screen:focus-within .booking-form-final{
+  margin-top:10px;
+  padding:14px;
+}
+
+#details-screen:focus-within .form-heading,
+#details-screen:focus-within .booking-confirm-note{
+  display:none !important;
+}
+
+body:has(#details-screen input:focus) .bottom-nav{
+  display:none !important;
+}
+
+body:has(#details-screen input:focus) .app-shell{
+  padding-top:8px !important;
+  padding-bottom:12px !important;
+}
+
+/* Success */
+body:has(#success-screen.active) .bottom-nav{
+  display:none !important;
+}
+
+.success-card-v2{
+  min-height:auto;
+  padding:30px 20px 24px;
+  justify-content:flex-start;
+}
+
+.success-card-v2 .success-icon{
+  width:76px;
+  height:76px;
+  margin-bottom:18px;
+  font-size:36px;
+}
+
+.success-card-v2 h2{
+  margin-bottom:8px;
+}
+
+.success-lead{
+  max-width:340px;
+  margin-bottom:14px;
+}
+
+.success-status-pill{
+  display:inline-flex;
+  align-items:center;
+  gap:8px;
+  margin-bottom:18px;
+  padding:9px 13px;
+  border-radius:999px;
+  background:#fff4df;
+  color:#9a681a;
+  font-size:12px;
+  font-weight:700;
+}
+
+.success-status-pill span{
+  width:8px;
+  height:8px;
+  border-radius:50%;
+  background:#e7a83d;
+  box-shadow:0 0 0 4px rgba(231,168,61,.14);
+}
+
+.success-booking-ticket{
+  width:100%;
+  padding:16px 17px;
+  border:1px solid var(--border);
+  border-radius:22px;
+  background:#fff;
+  text-align:left;
+  box-shadow:0 10px 24px rgba(60,30,43,.05);
+}
+
+.success-ticket-top{
+  display:flex;
+  align-items:flex-start;
+  justify-content:space-between;
+  gap:14px;
+  padding-bottom:13px;
+  border-bottom:1px solid var(--border);
+}
+
+.success-ticket-top>div strong{
+  display:block;
+}
+
+.success-info{
+  width:100%;
+  display:flex;
+  align-items:flex-start;
+  gap:10px;
+  margin-top:14px;
+  padding:13px 14px;
+  border-radius:18px;
+  background:var(--soft);
+  text-align:left;
+}
+
+.success-info>span{
+  font-size:18px;
+}
+
+.success-info p{
+  margin:0;
+  color:#6e6267;
+  font-size:12px;
+  line-height:1.55;
+}
+
+.success-profile-button{
+  margin:18px 0 10px;
+}
+
+.success-home-button{
+  margin-bottom:0;
+}

@@ -922,13 +922,27 @@ async function renderTimes() {
 }
 
 function renderSummary() {
-  document.querySelector("#booking-summary").innerHTML =
-    `<strong>${booking.service}</strong><br>` +
-    `👩‍🎨 ${booking.master}<br>` +
-    `📅 ${booking.date}<br>` +
-    `🕒 ${booking.time}<br>` +
-    `💰 ${booking.price}<br>` +
-    `⏳ ${booking.duration}`;
+  const summary = document.querySelector("#booking-summary");
+  const submitButton = document.querySelector("#booking-submit-button");
+
+  if (summary) {
+    summary.innerHTML =
+      `<div class="review-main-row">` +
+        `<div class="review-service-icon">✦</div>` +
+        `<div><small>Послуга</small><strong>${booking.service}</strong></div>` +
+        `<strong class="review-price">${booking.price}</strong>` +
+      `</div>` +
+      `<div class="review-detail-row"><span>👩‍🎨 Майстер</span><strong>${booking.master}</strong></div>` +
+      `<div class="review-detail-row"><span>📅 Дата</span><strong>${booking.date}</strong></div>` +
+      `<div class="review-detail-row"><span>🕒 Час</span><strong>${booking.time}</strong></div>` +
+      `<div class="review-detail-row"><span>⏳ Тривалість</span><strong>${booking.duration}</strong></div>`;
+  }
+
+  if (submitButton) {
+    submitButton.textContent = booking.price
+      ? `Підтвердити запис · ${booking.price}`
+      : "Підтвердити запис";
+  }
 
   const profileName = getSavedProfileName();
   const nameInput = document.querySelector("#client-name");
@@ -1015,11 +1029,31 @@ document.querySelector("#booking-form").addEventListener(
       savePhone(phone);
       renderClientProfile();
 
-      document.querySelector("#success-description").innerHTML =
-        `${name}, вашу заявку <strong>№${responseData.booking_id}</strong> ` +
-        `на <strong>${booking.service}</strong> створено.<br>` +
-        `${booking.date} о ${booking.time}<br>` +
-        `Майстер: ${booking.master}`;
+      const successTitle = document.querySelector("#success-title");
+      const successDescription = document.querySelector("#success-description");
+      const successTicket = document.querySelector("#success-booking-ticket");
+
+      if (successTitle) {
+        successTitle.textContent = `Чудово, ${name}!`;
+      }
+
+      if (successDescription) {
+        successDescription.innerHTML =
+          `Заявка <strong>№${responseData.booking_id}</strong> успішно створена. ` +
+          `Залишився лише короткий крок — підтвердження від адміністратора.`;
+      }
+
+      if (successTicket) {
+        successTicket.innerHTML =
+          `<div class="success-ticket-top">` +
+            `<div><small>Послуга</small><strong>${booking.service}</strong></div>` +
+            `<strong class="success-ticket-price">${booking.price}</strong>` +
+          `</div>` +
+          `<div class="success-ticket-row"><span>👩‍🎨 Майстер</span><strong>${booking.master}</strong></div>` +
+          `<div class="success-ticket-row"><span>📅 Дата</span><strong>${booking.date}</strong></div>` +
+          `<div class="success-ticket-row"><span>🕒 Час</span><strong>${booking.time}</strong></div>` +
+          `<div class="success-ticket-row"><span>⏳ Тривалість</span><strong>${booking.duration}</strong></div>`;
+      }
 
       tg?.HapticFeedback?.notificationOccurred("success");
       showScreen("success-screen");
@@ -1037,10 +1071,13 @@ document.querySelector("#booking-form").addEventListener(
         submitButton.disabled = false;
 
         if (submitButton.tagName === "INPUT") {
-          submitButton.value = originalButtonText || "Записатися";
+          submitButton.value = originalButtonText || "Підтвердити запис";
         } else {
           submitButton.textContent =
-            originalButtonText || "Записатися";
+            originalButtonText ||
+            (booking.price
+              ? `Підтвердити запис · ${booking.price}`
+              : "Підтвердити запис");
         }
       }
     }

@@ -7,7 +7,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700&family=Playfair+Display:wght@600;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="style.css?v=7.11">
+  <link rel="stylesheet" href="style.css?v=7.12">
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
   <script>
     (function () {
@@ -234,21 +234,44 @@
     <section class="screen" id="details-screen">
       <header class="section-header">
         <button class="back-button" data-back>←</button>
-        <div><p class="eyebrow">Крок 5</p><h2>Ваші дані</h2></div>
+        <div><p class="eyebrow">Крок 5 з 5</p><h2>Перевірте запис</h2></div>
       </header>
 
-      <div class="summary-card" id="booking-summary"></div>
+      <div class="booking-review">
+        <div class="booking-review-heading">
+          <div>
+            <p class="eyebrow">Ваш візит</p>
+            <h3>Усе правильно?</h3>
+          </div>
+          <span class="review-badge">Майже готово</span>
+        </div>
+        <div class="booking-review-grid" id="booking-summary"></div>
+      </div>
 
-      <form id="booking-form" class="booking-form">
+      <form id="booking-form" class="booking-form booking-form-final">
+        <div class="form-heading">
+          <strong>Контактні дані</strong>
+          <small>Ми використаємо їх лише для цього запису та зв’язку із салоном.</small>
+        </div>
+
         <label>
           <span>Ім’я або ім’я та прізвище</span>
-          <input id="client-name" type="text" placeholder="Наприклад: Марія Коваль" required>
+          <input id="client-name" type="text" placeholder="Наприклад: Марія Коваль" autocomplete="name" required>
         </label>
+
         <label>
           <span>Номер телефону</span>
-          <input id="client-phone" type="tel" placeholder="+380671234567" required>
+          <input id="client-phone" type="tel" inputmode="tel" autocomplete="tel" placeholder="+380671234567" required>
         </label>
-        <button class="primary-button" type="submit">Підтвердити запис</button>
+
+        <div class="booking-confirm-note">
+          <span>✓</span>
+          <p>Після відправлення адміністратор перевірить заявку. Підтвердження прийде вам у Telegram.</p>
+        </div>
+
+        <button class="primary-button booking-submit-button" id="booking-submit-button" type="submit">
+          Підтвердити запис
+        </button>
       </form>
     </section>
 
@@ -459,12 +482,30 @@
     </section>
 
     <section class="screen" id="success-screen">
-      <div class="success-card">
+      <div class="success-card success-card-v2">
         <div class="success-icon">✓</div>
-        <p class="eyebrow">Заявку створено</p>
-        <h2>Дякуємо!</h2>
-        <p id="success-description"></p>
-        <button class="primary-button" data-open="home-screen">На головну</button>
+        <p class="eyebrow">Запис створено</p>
+        <h2 id="success-title">Чудово!</h2>
+        <p class="success-lead" id="success-description"></p>
+
+        <div class="success-status-pill">
+          <span></span>
+          Очікує підтвердження
+        </div>
+
+        <div class="success-booking-ticket" id="success-booking-ticket"></div>
+
+        <div class="success-info">
+          <span>💬</span>
+          <p>Адміністратор уже отримав заявку. Після підтвердження ви отримаєте повідомлення у Telegram.</p>
+        </div>
+
+        <button class="primary-button success-profile-button" data-open="client-profile-screen">
+          Перейти до мого запису
+        </button>
+        <button class="secondary-button success-home-button" data-open="home-screen">
+          На головну
+        </button>
       </div>
     </section>
 
@@ -476,6 +517,6 @@
     </nav>
   </main>
 
-  <script src="app.js?v=7.11"></script>
+  <script src="app.js?v=7.12"></script>
 </body>
 </html>
