@@ -1,6 +1,6 @@
 
 const API_BASE_URL =
-  "https://housewares-inspections-handling-votes.trycloudflare.com";
+  "https://neural-communities-hebrew-fig.trycloudflare.com";
 
 const masters = {
   nails: {
