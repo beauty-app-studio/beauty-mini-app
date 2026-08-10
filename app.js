@@ -339,6 +339,7 @@ function normalizeServerBooking(item) {
 
 let completedVisitCount = 0;
 let profileSyncInProgress = false;
+let preferredProfileBookingId = null;
 
 function renderClientProfile() {
   const user = getDisplayUser();
@@ -433,12 +434,30 @@ renderClientProfile();
 
     completedVisitCount = Number(data.completed_count || 0);
 
-    const firstBooking = Array.isArray(data.bookings)
-      ? data.bookings[0]
-      : null;
+    const serverBookings = Array.isArray(data.bookings)
+      ? data.bookings
+      : [];
+
+    let selectedBooking = serverBookings[0] || null;
+
+    if (preferredProfileBookingId !== null) {
+      const preferredBooking = serverBookings.find(
+        item =>
+          String(item.booking_id) ===
+          String(preferredProfileBookingId)
+      );
+
+      if (preferredBooking) {
+        selectedBooking = preferredBooking;
+      }
+
+      preferredProfileBookingId = null;
+    }
 
     saveBooking(
-      firstBooking ? normalizeServerBooking(firstBooking) : null
+      selectedBooking
+        ? normalizeServerBooking(selectedBooking)
+        : null
     );
   } catch (error) {
     console.warn("Profile sync error:", error);
@@ -598,6 +617,13 @@ function showScreen(id, add = true) {
 document.querySelectorAll("[data-open]").forEach(button => {
   button.addEventListener("click", () => {
     const target = button.dataset.open;
+
+    if (
+      preferredProfileBookingId !== null &&
+      button.id !== "success-view-booking"
+    ) {
+      preferredProfileBookingId = null;
+    }
 
     if (
       target === "client-profile-screen" &&
@@ -1025,6 +1051,7 @@ document.querySelector("#booking-form").addEventListener(
       };
 
       saveBooking(result);
+      preferredProfileBookingId = responseData.booking_id;
       saveProfileName(name);
       savePhone(phone);
       renderClientProfile();
