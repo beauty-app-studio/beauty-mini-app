@@ -7,7 +7,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700&family=Playfair+Display:wght@600;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="style.css?v=7.12">
+  <link rel="stylesheet" href="style.css?v=7.15">
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
   <script>
     (function () {
@@ -389,6 +389,9 @@
         </article>
 
         <div class="booking-action-row" id="profile-booking-actions">
+          <button class="soft-action-button late-action-button" id="late-arrival-button">
+            ⏰ Я запізнююсь
+          </button>
           <button class="soft-action-button" id="repeat-booking-button">
             ↻ Повторити
           </button>
@@ -428,6 +431,55 @@
           <div><strong>Підтримка салону</strong><small>Контакти адміністратора</small></div>
           <b>›</b>
         </button>
+      </section>
+    </section>
+
+
+
+    <section class="screen" id="late-arrival-screen">
+      <header class="section-header">
+        <button class="back-button" data-back>←</button>
+        <div>
+          <p class="eyebrow">Мій запис</p>
+          <h2>Повідомити про запізнення</h2>
+        </div>
+      </header>
+
+      <section class="late-arrival-card">
+        <div class="late-arrival-icon">⏰</div>
+        <h3>На скільки ви затримуєтесь?</h3>
+        <p id="late-arrival-summary"></p>
+
+        <div class="late-minute-grid" id="late-minute-grid">
+          <button type="button" data-late-minutes="5">5 хв</button>
+          <button type="button" data-late-minutes="10">10 хв</button>
+          <button type="button" data-late-minutes="15">15 хв</button>
+          <button type="button" data-late-minutes="30">30 хв</button>
+        </div>
+
+        <form id="late-arrival-form">
+          <label class="late-message-field">
+            <span>Коментар — необов’язково</span>
+            <textarea
+              id="late-arrival-message"
+              maxlength="240"
+              rows="3"
+              placeholder="Наприклад: вже в дорозі, затримуюсь через затор"
+            ></textarea>
+          </label>
+
+          <div class="late-arrival-note">
+            <span>✓</span>
+            <p>
+              Повідомлення фіксується біля запису та одразу надходить адміністратору.
+              Коли підключимо Telegram майстра, він також отримає його напряму.
+            </p>
+          </div>
+
+          <button class="primary-button" id="late-arrival-submit" type="submit" disabled>
+            Повідомити салон
+          </button>
+        </form>
       </section>
     </section>
 
@@ -521,6 +573,6 @@
     </nav>
   </main>
 
-  <script src="app.js?v=7.14"></script>
+  <script src="app.js?v=7.15"></script>
 </body>
 </html>

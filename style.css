@@ -463,3 +463,145 @@ body:has(#success-screen.active) .bottom-nav{
 .success-home-button{
   margin-bottom:0;
 }
+
+
+/* v7.15: late-arrival communication */
+.late-action-button{
+  grid-column:1 / -1;
+  border-color:#f1d7df;
+  background:linear-gradient(135deg,#fff7fa,#fff);
+  color:var(--accent-dark);
+}
+
+.late-arrival-card{
+  padding:24px 20px;
+  border:1px solid var(--border);
+  border-radius:28px;
+  background:linear-gradient(150deg,#fff,#fff6f9);
+  box-shadow:var(--shadow);
+}
+
+.late-arrival-icon{
+  width:68px;
+  height:68px;
+  margin:0 auto 15px;
+  display:grid;
+  place-items:center;
+  border-radius:22px;
+  background:var(--soft);
+  font-size:31px;
+}
+
+.late-arrival-card h3{
+  margin:0 0 8px;
+  text-align:center;
+  font-size:23px;
+}
+
+#late-arrival-summary{
+  margin:0 0 20px;
+  color:var(--muted);
+  text-align:center;
+  line-height:1.55;
+}
+
+#late-arrival-summary strong{
+  color:var(--text);
+}
+
+.late-minute-grid{
+  display:grid;
+  grid-template-columns:repeat(4,1fr);
+  gap:8px;
+  margin-bottom:18px;
+}
+
+.late-minute-grid button{
+  min-height:50px;
+  border:1px solid var(--border);
+  border-radius:15px;
+  background:#fff;
+  color:var(--text);
+  font-weight:800;
+}
+
+.late-minute-grid button.selected{
+  border-color:var(--accent);
+  background:var(--accent);
+  color:#fff;
+  box-shadow:0 8px 18px rgba(255,79,135,.2);
+}
+
+.late-message-field{
+  display:grid;
+  gap:8px;
+  text-align:left;
+  font-weight:700;
+}
+
+.late-message-field span{
+  font-size:13px;
+  color:var(--muted);
+}
+
+.late-message-field textarea{
+  width:100%;
+  box-sizing:border-box;
+  padding:14px 15px;
+  border:1px solid var(--border);
+  border-radius:16px;
+  background:#fff;
+  color:var(--text);
+  font:inherit;
+  line-height:1.45;
+  resize:none;
+  outline:none;
+}
+
+.late-message-field textarea:focus{
+  border-color:var(--accent);
+  box-shadow:0 0 0 4px rgba(255,79,135,.10);
+}
+
+.late-arrival-note{
+  display:flex;
+  align-items:flex-start;
+  gap:10px;
+  margin:14px 0;
+  padding:13px 14px;
+  border-radius:17px;
+  background:#fff6f9;
+  color:var(--muted);
+}
+
+.late-arrival-note>span{
+  width:24px;
+  height:24px;
+  flex:0 0 24px;
+  display:grid;
+  place-items:center;
+  border-radius:50%;
+  background:#ffe2ec;
+  color:var(--accent-dark);
+  font-weight:800;
+}
+
+.late-arrival-note p{
+  margin:1px 0 0;
+  font-size:12px;
+  line-height:1.5;
+}
+
+#late-arrival-screen:focus-within .section-header{
+  display:none !important;
+}
+
+body:has(#late-arrival-message:focus) .bottom-nav{
+  display:none !important;
+}
+
+@media (max-width:380px){
+  .late-minute-grid{
+    grid-template-columns:1fr 1fr;
+  }
+}

@@ -122,6 +122,10 @@ function apiErrorMessage(status, responseData) {
       return "Цей запис уже не можна скасувати.";
     }
 
+    if (detail === "Only confirmed bookings can receive client updates.") {
+      return "Повідомити про запізнення можна лише для підтвердженого запису.";
+    }
+
     return (
       "Цей час щойно зайняли. Поверніться до вибору часу " +
       "та оберіть інший варіант."
@@ -365,6 +369,7 @@ function renderClientProfile() {
 
   const card = document.querySelector("#next-booking-card");
   const actions = document.querySelector("#profile-booking-actions");
+  const lateButton = document.querySelector("#late-arrival-button");
 
   if (!card || !actions) return;
 
@@ -411,6 +416,10 @@ function renderClientProfile() {
 
   actions.style.display =
     ["new", "confirmed"].includes(status) ? "grid" : "none";
+
+  if (lateButton) {
+    lateButton.style.display = status === "confirmed" ? "block" : "none";
+  }
 }
 
 async function syncClientBookings() {
@@ -1110,6 +1119,137 @@ document.querySelector("#booking-form").addEventListener(
     }
   }
 );
+
+
+let selectedLateMinutes = null;
+
+function renderLateArrivalScreen() {
+  const savedBooking = getSavedBooking();
+  const summary = document.querySelector("#late-arrival-summary");
+  const submit = document.querySelector("#late-arrival-submit");
+  const message = document.querySelector("#late-arrival-message");
+
+  selectedLateMinutes = null;
+
+  document.querySelectorAll("[data-late-minutes]").forEach(button => {
+    button.classList.remove("selected");
+  });
+
+  if (submit) {
+    submit.disabled = true;
+    submit.textContent = "Повідомити салон";
+  }
+
+  if (message) {
+    message.value = "";
+  }
+
+  if (summary && savedBooking) {
+    summary.innerHTML =
+      `<strong>Запис №${savedBooking.bookingId}</strong><br>` +
+      `${savedBooking.service} · ${savedBooking.master}<br>` +
+      `${savedBooking.date} о ${savedBooking.time}`;
+  }
+}
+
+document.querySelector("#late-arrival-button").addEventListener(
+  "click",
+  () => {
+    const savedBooking = getSavedBooking();
+
+    if (!savedBooking?.bookingId) {
+      showAppAlert("Активний запис не знайдено.");
+      return;
+    }
+
+    if (savedBooking.status !== "confirmed") {
+      showAppAlert(
+        "Повідомити про запізнення можна після підтвердження запису адміністратором."
+      );
+      return;
+    }
+
+    renderLateArrivalScreen();
+    showScreen("late-arrival-screen");
+  }
+);
+
+document.querySelectorAll("[data-late-minutes]").forEach(button => {
+  button.addEventListener("click", () => {
+    selectedLateMinutes = Number(button.dataset.lateMinutes);
+
+    document.querySelectorAll("[data-late-minutes]").forEach(item => {
+      item.classList.toggle("selected", item === button);
+    });
+
+    document.querySelector("#late-arrival-submit").disabled = false;
+    getTelegramWebApp()?.HapticFeedback?.selectionChanged?.();
+  });
+});
+
+document.querySelector("#late-arrival-form").addEventListener(
+  "submit",
+  async event => {
+    event.preventDefault();
+
+    const savedBooking = getSavedBooking();
+    const initData = getInitData();
+    const submit = document.querySelector("#late-arrival-submit");
+    const message = document.querySelector("#late-arrival-message").value.trim();
+
+    if (!savedBooking?.bookingId) {
+      showAppAlert("Активний запис не знайдено.");
+      return;
+    }
+
+    if (!selectedLateMinutes) {
+      showAppAlert("Оберіть приблизний час запізнення.");
+      return;
+    }
+
+    if (!initData) {
+      showAppAlert("Ця функція доступна лише всередині Telegram.");
+      return;
+    }
+
+    const oldText = submit.textContent;
+    submit.disabled = true;
+    submit.textContent = "Надсилаємо…";
+
+    try {
+      const result = await apiPost(
+        `/api/bookings/${savedBooking.bookingId}/late`,
+        {
+          init_data: initData,
+          minutes: selectedLateMinutes,
+          message,
+        }
+      );
+
+      getTelegramWebApp()?.HapticFeedback?.notificationOccurred("success");
+
+      if (result.master_notified) {
+        showAppAlert(
+          `Готово. Адміністратор і майстер отримали повідомлення про запізнення на ${selectedLateMinutes} хв.`
+        );
+      } else {
+        showAppAlert(
+          `Готово. Адміністратор отримав повідомлення про запізнення на ${selectedLateMinutes} хв і бачить, якого майстра потрібно попередити.`
+        );
+      }
+
+      showScreen("client-profile-screen");
+    } catch (error) {
+      getTelegramWebApp()?.HapticFeedback?.notificationOccurred("error");
+      showAppAlert(error.message);
+      await syncClientBookings();
+    } finally {
+      submit.disabled = false;
+      submit.textContent = oldText;
+    }
+  }
+);
+
 
 document.querySelector("#cancel-booking-button").addEventListener(
   "click",
