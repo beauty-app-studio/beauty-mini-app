@@ -1146,8 +1146,7 @@ function renderLateArrivalScreen() {
 
   if (summary && savedBooking) {
     summary.innerHTML =
-      `<strong>Запис №${savedBooking.bookingId}</strong><br>` +
-      `${savedBooking.service} · ${savedBooking.master}<br>` +
+      `<strong>${savedBooking.service}</strong><br>` +
       `${savedBooking.date} о ${savedBooking.time}`;
   }
 }
