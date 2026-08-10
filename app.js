@@ -1388,6 +1388,7 @@ const telegramWebApp = getTelegramWebApp();
 if (telegramWebApp) {
   telegramWebApp.ready();
   telegramWebApp.expand();
+  telegramWebApp.disableVerticalSwipes?.();
 
   try {
     telegramWebApp.setHeaderColor?.("#f8f5f6");
