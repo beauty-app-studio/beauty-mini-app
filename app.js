@@ -1,6 +1,6 @@
 
 const API_BASE_URL =
-  "https://aquarium-pixel-entertaining-madonna.trycloudflare.com";
+  "https://cradle-css-plan-maple.trycloudflare.com";
 
 const masters = {
   nails: {
