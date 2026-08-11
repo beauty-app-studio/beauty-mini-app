@@ -1,6 +1,6 @@
 
 const API_BASE_URL =
-  "https://neural-communities-hebrew-fig.trycloudflare.com";
+  "https://aquarium-pixel-entertaining-madonna.trycloudflare.com";
 
 const masters = {
   nails: {
