@@ -703,3 +703,15 @@ body:has(#late-arrival-message:focus) .bottom-nav{
 .booking-action-row{
   grid-template-columns:1fr 1fr;
 }
+
+
+/* v7.20.1 — explicit reschedule confirmation */
+.reschedule-confirm-button{
+  width:100%;
+  margin-top:16px;
+  margin-bottom:8px;
+}
+
+.reschedule-confirm-button[hidden]{
+  display:none !important;
+}

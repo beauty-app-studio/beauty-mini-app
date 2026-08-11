@@ -631,6 +631,14 @@ function setBookingFlowMode(mode = "new") {
   const dateTitle = document.querySelector("#date-step-title");
   const timeEyebrow = document.querySelector("#time-step-eyebrow");
   const timeTitle = document.querySelector("#time-step-title");
+  const rescheduleConfirmButton =
+    document.querySelector("#reschedule-confirm-button");
+
+  if (rescheduleConfirmButton) {
+    rescheduleConfirmButton.hidden = !isReschedule;
+    rescheduleConfirmButton.disabled = true;
+    rescheduleConfirmButton.textContent = "Підтвердити перенесення";
+  }
 
   if (dateEyebrow) {
     dateEyebrow.textContent = isReschedule ? "Перенесення запису" : "Крок 3";
@@ -961,6 +969,16 @@ async function renderTimes() {
   const summary = document.querySelector("#time-summary");
   const grid = document.querySelector("#time-grid");
   const status = document.querySelector("#time-status");
+  const rescheduleConfirmButton =
+    document.querySelector("#reschedule-confirm-button");
+
+  if (rescheduleConfirmButton) {
+    rescheduleConfirmButton.hidden = bookingFlowMode !== "reschedule";
+    rescheduleConfirmButton.disabled = true;
+    rescheduleConfirmButton.textContent = "Підтвердити перенесення";
+  }
+
+  booking.time = "";
 
   summary.innerHTML =
     `<strong>${booking.date}</strong><br>` +
@@ -1035,67 +1053,19 @@ async function renderTimes() {
             return;
           }
 
-          const savedBooking = getSavedBooking();
-          const initData = getInitData();
+          const confirmButton =
+            document.querySelector("#reschedule-confirm-button");
 
-          if (!savedBooking?.bookingId || !rescheduleBookingId || !initData) {
-            showAppAlert("Не вдалося визначити запис для перенесення.");
-            return;
+          if (confirmButton) {
+            confirmButton.hidden = false;
+            confirmButton.disabled = false;
+            confirmButton.textContent =
+              `Підтвердити перенесення · ${booking.time}`;
           }
 
-          const confirmed = await showAppConfirm(
-            `Перенести запис №${rescheduleBookingId} на ${booking.date} о ${booking.time}?`
-          );
-
-          if (!confirmed) {
-            button.classList.remove("selected");
-            booking.time = "";
-            return;
-          }
-
-          const timeButtons = document.querySelectorAll(".time-button");
-          timeButtons.forEach(item => {
-            item.disabled = true;
-          });
-
-          status.className = "time-status loading";
-          status.textContent = "Переносимо запис…";
-
-          try {
-            const responseData = await apiPost(
-              `/api/bookings/${rescheduleBookingId}/reschedule`,
-              {
-                booking_date: booking.date,
-                booking_time: booking.time,
-                init_data: initData,
-              }
-            );
-
-            preferredProfileBookingId = responseData.booking_id;
-            getTelegramWebApp()?.HapticFeedback?.notificationOccurred("success");
-
-            const movedId = responseData.booking_id;
-            resetBookingFlow();
-            preferredProfileBookingId = movedId;
-
-            await syncClientBookings();
-            showScreen("client-profile-screen");
-            showAppAlert(
-              "Запис перенесено. Новий час очікує підтвердження адміністратора."
-            );
-          } catch (error) {
-            console.error("Reschedule API error:", error);
-            getTelegramWebApp()?.HapticFeedback?.notificationOccurred("error");
-            showAppAlert(error.message);
-
-            if (error.status === 409) {
-              await renderTimes();
-            } else {
-              timeButtons.forEach(item => {
-                item.disabled = false;
-              });
-            }
-          }
+          status.className = "time-status success";
+          status.textContent =
+            `Обрано ${booking.time}. Натисніть «Підтвердити перенесення».`;
         });
       }
 
@@ -1465,6 +1435,86 @@ document.querySelector("#cancel-booking-button").addEventListener(
     }
   }
 );
+
+document.querySelector("#reschedule-confirm-button")?.addEventListener(
+  "click",
+  async event => {
+    const savedBooking = getSavedBooking();
+    const initData = getInitData();
+    const submit = event.currentTarget;
+    const status = document.querySelector("#time-status");
+
+    if (
+      !savedBooking?.bookingId ||
+      !rescheduleBookingId ||
+      !booking.date ||
+      !booking.time ||
+      !initData
+    ) {
+      showAppAlert("Оберіть нову дату та час для перенесення.");
+      return;
+    }
+
+    const oldText = submit.textContent;
+    submit.disabled = true;
+    submit.textContent = "Переносимо…";
+
+    const timeButtons = document.querySelectorAll(".time-button");
+    timeButtons.forEach(item => {
+      item.disabled = true;
+    });
+
+    if (status) {
+      status.className = "time-status loading";
+      status.textContent = "Переносимо запис…";
+    }
+
+    try {
+      const responseData = await apiPost(
+        `/api/bookings/${rescheduleBookingId}/reschedule`,
+        {
+          booking_date: booking.date,
+          booking_time: booking.time,
+          init_data: initData,
+        }
+      );
+
+      preferredProfileBookingId = responseData.booking_id;
+      getTelegramWebApp()?.HapticFeedback?.notificationOccurred("success");
+
+      const movedId = responseData.booking_id;
+      resetBookingFlow();
+      preferredProfileBookingId = movedId;
+
+      await syncClientBookings();
+      showScreen("client-profile-screen");
+      showAppAlert(
+        "Запис перенесено. Новий час очікує підтвердження адміністратора."
+      );
+    } catch (error) {
+      console.error("Reschedule API error:", error);
+      getTelegramWebApp()?.HapticFeedback?.notificationOccurred("error");
+      showAppAlert(error.message);
+
+      if (error.status === 409) {
+        await renderTimes();
+      } else {
+        timeButtons.forEach(item => {
+          item.disabled = false;
+        });
+        submit.disabled = false;
+        submit.textContent = oldText;
+
+        if (status) {
+          status.className = "time-status success";
+          status.textContent =
+            `Обрано ${booking.time}. Натисніть «Підтвердити перенесення».`;
+        }
+      }
+    }
+  }
+);
+
 
 document.querySelector("#reschedule-booking-button").addEventListener(
   "click",

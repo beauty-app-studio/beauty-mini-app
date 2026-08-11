@@ -7,7 +7,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700&family=Playfair+Display:wght@600;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="style.css?v=7.20">
+  <link rel="stylesheet" href="style.css?v=7.20.1">
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
   <script>
     (function () {
@@ -229,6 +229,16 @@
       <div class="summary-card mini-summary" id="time-summary"></div>
       <div class="time-status" id="time-status">Оберіть дату, щоб побачити вільний час.</div>
       <div class="time-grid" id="time-grid"></div>
+
+      <button
+        class="primary-button reschedule-confirm-button"
+        id="reschedule-confirm-button"
+        type="button"
+        hidden
+        disabled
+      >
+        Підтвердити перенесення
+      </button>
     </section>
 
     <section class="screen" id="details-screen">
@@ -573,6 +583,6 @@
     </nav>
   </main>
 
-  <script src="app.js?v=7.20"></script>
+  <script src="app.js?v=7.20.1"></script>
 </body>
 </html>
