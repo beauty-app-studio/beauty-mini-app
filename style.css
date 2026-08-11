@@ -605,3 +605,91 @@ body:has(#late-arrival-message:focus) .bottom-nav{
     grid-template-columns:1fr 1fr;
   }
 }
+
+
+/* v7.18 — multiple active client bookings */
+.client-bookings-list{
+  display:grid;
+  gap:10px;
+  margin:4px 0 14px;
+}
+
+.client-booking-list-item{
+  width:100%;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:12px;
+  padding:14px 15px;
+  border:1px solid var(--border);
+  border-radius:18px;
+  background:#fff;
+  color:var(--text);
+  text-align:left;
+  cursor:pointer;
+}
+
+.client-booking-list-item:active{
+  transform:scale(.985);
+}
+
+.client-booking-list-item.selected{
+  border-color:rgba(255,79,135,.5);
+  box-shadow:0 8px 22px rgba(255,79,135,.10);
+  background:linear-gradient(135deg,#fff7fa,#fff);
+}
+
+.client-booking-list-main{
+  min-width:0;
+  display:grid;
+  gap:3px;
+}
+
+.client-booking-list-main strong{
+  font-size:15px;
+}
+
+.client-booking-list-main small{
+  color:var(--muted);
+  font-size:12px;
+  line-height:1.35;
+}
+
+.client-booking-list-status{
+  flex:0 0 auto;
+  max-width:128px;
+  padding:7px 9px;
+  border-radius:999px;
+  font-size:10px;
+  font-weight:800;
+  text-align:center;
+}
+
+.client-booking-list-status.status-new{
+  background:#fff2bd;
+  color:#8f6b00;
+}
+
+.client-booking-list-status.status-confirmed{
+  background:#e8f8ee;
+  color:#267349;
+}
+
+.selected-booking-label{
+  margin:16px 4px 8px;
+  color:var(--muted);
+  font-size:11px;
+  font-weight:800;
+  letter-spacing:.08em;
+  text-transform:uppercase;
+}
+
+@media (max-width:380px){
+  .client-booking-list-item{
+    align-items:flex-start;
+  }
+
+  .client-booking-list-status{
+    max-width:105px;
+  }
+}

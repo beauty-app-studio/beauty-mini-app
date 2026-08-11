@@ -344,6 +344,7 @@ function normalizeServerBooking(item) {
 let completedVisitCount = 0;
 let profileSyncInProgress = false;
 let preferredProfileBookingId = null;
+let activeClientBookings = [];
 
 function renderClientProfile() {
   const user = getDisplayUser();
@@ -370,10 +371,38 @@ function renderClientProfile() {
   const card = document.querySelector("#next-booking-card");
   const actions = document.querySelector("#profile-booking-actions");
   const lateButton = document.querySelector("#late-arrival-button");
+  const bookingsList = document.querySelector("#client-bookings-list");
+  const selectedLabel = document.querySelector("#selected-booking-label");
 
   if (!card || !actions) return;
 
+  if (bookingsList) {
+    bookingsList.innerHTML = activeClientBookings.map(item => {
+      const isSelected =
+        savedBooking &&
+        String(savedBooking.bookingId) === String(item.bookingId);
+      const itemStatus = item.status || "new";
+
+      return `
+        <button
+          type="button"
+          class="client-booking-list-item${isSelected ? " selected" : ""}"
+          data-profile-booking-id="${item.bookingId}"
+        >
+          <span class="client-booking-list-main">
+            <strong>${item.service}</strong>
+            <small>${item.date} · ${item.time}</small>
+            <small>${item.master}</small>
+          </span>
+          <span class="client-booking-list-status status-${itemStatus}">
+            ${statusLabel(itemStatus)}
+          </span>
+        </button>`;
+    }).join("");
+  }
+
   if (!savedBooking) {
+    if (selectedLabel) selectedLabel.style.display = "none";
     card.innerHTML = `
       <div class="empty-booking-state">
         <span>📅</span>
@@ -383,6 +412,8 @@ function renderClientProfile() {
     actions.style.display = "none";
     return;
   }
+
+  if (selectedLabel) selectedLabel.style.display = "block";
 
   const status = savedBooking.status || "new";
 
@@ -427,10 +458,9 @@ async function syncClientBookings() {
 
   const initData = getInitData();
   if (!initData) {
-    
-
-
-renderClientProfile();
+    const localBooking = getSavedBooking();
+    activeClientBookings = localBooking ? [localBooking] : [];
+    renderClientProfile();
     return;
   }
 
@@ -447,12 +477,15 @@ renderClientProfile();
       ? data.bookings
       : [];
 
-    let selectedBooking = serverBookings[0] || null;
+    activeClientBookings = serverBookings.map(normalizeServerBooking);
+
+    const currentBooking = getSavedBooking();
+    let selectedBooking = activeClientBookings[0] || null;
 
     if (preferredProfileBookingId !== null) {
-      const preferredBooking = serverBookings.find(
+      const preferredBooking = activeClientBookings.find(
         item =>
-          String(item.booking_id) ===
+          String(item.bookingId) ===
           String(preferredProfileBookingId)
       );
 
@@ -461,13 +494,19 @@ renderClientProfile();
       }
 
       preferredProfileBookingId = null;
+    } else if (currentBooking?.bookingId) {
+      const stillActive = activeClientBookings.find(
+        item =>
+          String(item.bookingId) ===
+          String(currentBooking.bookingId)
+      );
+
+      if (stillActive) {
+        selectedBooking = stillActive;
+      }
     }
 
-    saveBooking(
-      selectedBooking
-        ? normalizeServerBooking(selectedBooking)
-        : null
-    );
+    saveBooking(selectedBooking);
   } catch (error) {
     console.warn("Profile sync error:", error);
   } finally {
@@ -475,6 +514,27 @@ renderClientProfile();
     renderClientProfile();
   }
 }
+
+document.querySelector("#client-bookings-list")?.addEventListener(
+  "click",
+  event => {
+    const button = event.target.closest("[data-profile-booking-id]");
+    if (!button) return;
+
+    const selected = activeClientBookings.find(
+      item =>
+        String(item.bookingId) ===
+        String(button.dataset.profileBookingId)
+    );
+
+    if (!selected) return;
+
+    saveBooking(selected);
+    renderClientProfile();
+    getTelegramWebApp()?.HapticFeedback?.selectionChanged?.();
+  }
+);
+
 
 function renderFavorites() {
   const container = document.querySelector("#favorites-list");
@@ -1060,6 +1120,12 @@ document.querySelector("#booking-form").addEventListener(
       };
 
       saveBooking(result);
+      activeClientBookings = [
+        result,
+        ...activeClientBookings.filter(
+          item => String(item.bookingId) !== String(result.bookingId)
+        ),
+      ];
       preferredProfileBookingId = responseData.booking_id;
       saveProfileName(name);
       savePhone(phone);

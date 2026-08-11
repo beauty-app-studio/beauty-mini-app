@@ -7,7 +7,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700&family=Playfair+Display:wght@600;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="style.css?v=7.15">
+  <link rel="stylesheet" href="style.css?v=7.18">
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
   <script>
     (function () {
@@ -375,10 +375,16 @@
       <section class="profile-section">
         <div class="section-title-row">
           <div>
-            <p class="eyebrow">Найближчий візит</p>
-            <h3>Мій запис</h3>
+            <p class="eyebrow">Активні записи</p>
+            <h3>Мої записи</h3>
           </div>
         </div>
+
+        <div class="client-bookings-list" id="client-bookings-list"></div>
+
+        <p class="selected-booking-label" id="selected-booking-label">
+          Обраний запис
+        </p>
 
         <article class="next-booking-card" id="next-booking-card">
           <div class="empty-booking-state">
@@ -564,6 +570,6 @@
     </nav>
   </main>
 
-  <script src="app.js?v=7.16.1"></script>
+  <script src="app.js?v=7.18"></script>
 </body>
 </html>
