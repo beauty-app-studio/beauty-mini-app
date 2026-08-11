@@ -693,3 +693,13 @@ body:has(#late-arrival-message:focus) .bottom-nav{
     max-width:105px;
   }
 }
+
+
+/* v7.20 — booking reschedule */
+#reschedule-booking-button{
+  color:#7a5260;
+}
+
+.booking-action-row{
+  grid-template-columns:1fr 1fr;
+}

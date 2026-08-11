@@ -122,6 +122,10 @@ function apiErrorMessage(status, responseData) {
       return "Цей запис уже не можна скасувати.";
     }
 
+    if (detail === "This booking can no longer be rescheduled.") {
+      return "Цей запис уже не можна перенести.";
+    }
+
     if (detail === "Only confirmed bookings can receive client updates.") {
       return "Повідомити про запізнення можна лише для підтвердженого запису.";
     }
@@ -590,6 +594,8 @@ const booking = {
 let currentMonth = new Date();
 currentMonth.setDate(1);
 let activeMasterKey = null;
+let bookingFlowMode = "new";
+let rescheduleBookingId = null;
 
 function resetMasterFilter() {
   document.querySelectorAll(".master-card").forEach(card => {
@@ -617,6 +623,30 @@ function filterMastersForService(serviceName) {
   }
 }
 
+function setBookingFlowMode(mode = "new") {
+  bookingFlowMode = mode;
+
+  const isReschedule = mode === "reschedule";
+  const dateEyebrow = document.querySelector("#date-step-eyebrow");
+  const dateTitle = document.querySelector("#date-step-title");
+  const timeEyebrow = document.querySelector("#time-step-eyebrow");
+  const timeTitle = document.querySelector("#time-step-title");
+
+  if (dateEyebrow) {
+    dateEyebrow.textContent = isReschedule ? "Перенесення запису" : "Крок 3";
+  }
+  if (dateTitle) {
+    dateTitle.textContent = isReschedule ? "Оберіть нову дату" : "Оберіть дату";
+  }
+  if (timeEyebrow) {
+    timeEyebrow.textContent = isReschedule ? "Перенесення запису" : "Крок 4";
+  }
+  if (timeTitle) {
+    timeTitle.textContent = isReschedule ? "Оберіть новий час" : "Оберіть час";
+  }
+}
+
+
 function resetBookingFlow() {
   booking.master = "";
   booking.masterKey = "";
@@ -626,6 +656,8 @@ function resetBookingFlow() {
   booking.date = "";
   booking.time = "";
   activeMasterKey = null;
+  rescheduleBookingId = null;
+  setBookingFlowMode("new");
 }
 
 function setProfileSetupMode(mode = "first") {
@@ -951,6 +983,9 @@ async function renderTimes() {
       service: booking.service,
       booking_date: booking.date,
       init_data: initData,
+      ...(bookingFlowMode === "reschedule" && rescheduleBookingId
+        ? { booking_id: rescheduleBookingId }
+        : {}),
     });
 
     if (!data.workday) {
@@ -986,14 +1021,81 @@ async function renderTimes() {
       if (!isAvailable) {
         button.disabled = true;
       } else {
-        button.addEventListener("click", () => {
+        button.addEventListener("click", async () => {
           booking.time = time;
+
           document.querySelectorAll(".time-button").forEach(item => {
             item.classList.remove("selected");
           });
           button.classList.add("selected");
-          renderSummary();
-          showScreen("details-screen");
+
+          if (bookingFlowMode !== "reschedule") {
+            renderSummary();
+            showScreen("details-screen");
+            return;
+          }
+
+          const savedBooking = getSavedBooking();
+          const initData = getInitData();
+
+          if (!savedBooking?.bookingId || !rescheduleBookingId || !initData) {
+            showAppAlert("Не вдалося визначити запис для перенесення.");
+            return;
+          }
+
+          const confirmed = await showAppConfirm(
+            `Перенести запис №${rescheduleBookingId} на ${booking.date} о ${booking.time}?`
+          );
+
+          if (!confirmed) {
+            button.classList.remove("selected");
+            booking.time = "";
+            return;
+          }
+
+          const timeButtons = document.querySelectorAll(".time-button");
+          timeButtons.forEach(item => {
+            item.disabled = true;
+          });
+
+          status.className = "time-status loading";
+          status.textContent = "Переносимо запис…";
+
+          try {
+            const responseData = await apiPost(
+              `/api/bookings/${rescheduleBookingId}/reschedule`,
+              {
+                booking_date: booking.date,
+                booking_time: booking.time,
+                init_data: initData,
+              }
+            );
+
+            preferredProfileBookingId = responseData.booking_id;
+            getTelegramWebApp()?.HapticFeedback?.notificationOccurred("success");
+
+            const movedId = responseData.booking_id;
+            resetBookingFlow();
+            preferredProfileBookingId = movedId;
+
+            await syncClientBookings();
+            showScreen("client-profile-screen");
+            showAppAlert(
+              "Запис перенесено. Новий час очікує підтвердження адміністратора."
+            );
+          } catch (error) {
+            console.error("Reschedule API error:", error);
+            getTelegramWebApp()?.HapticFeedback?.notificationOccurred("error");
+            showAppAlert(error.message);
+
+            if (error.status === 409) {
+              await renderTimes();
+            } else {
+              timeButtons.forEach(item => {
+                item.disabled = false;
+              });
+            }
+          }
         });
       }
 
@@ -1364,11 +1466,63 @@ document.querySelector("#cancel-booking-button").addEventListener(
   }
 );
 
+document.querySelector("#reschedule-booking-button").addEventListener(
+  "click",
+  () => {
+    const savedBooking = getSavedBooking();
+
+    if (
+      !savedBooking?.bookingId ||
+      !["new", "confirmed"].includes(savedBooking.status || "new")
+    ) {
+      showAppAlert("Цей запис уже не можна перенести.");
+      return;
+    }
+
+    const masterEntry = Object.entries(masters).find(
+      ([, master]) => master.name === savedBooking.master
+    );
+
+    if (!masterEntry) {
+      showAppAlert("Не вдалося знайти майстра для перенесення.");
+      return;
+    }
+
+    const [masterKey] = masterEntry;
+
+    rescheduleBookingId = savedBooking.bookingId;
+    setBookingFlowMode("reschedule");
+
+    activeMasterKey = masterKey;
+    booking.masterKey = masterKey;
+    booking.master = savedBooking.master;
+    booking.service = savedBooking.service;
+    booking.price = savedBooking.price;
+    booking.duration = savedBooking.duration;
+    booking.date = "";
+    booking.time = "";
+
+    document.querySelector("#date-summary").innerHTML =
+      `<strong>Запис №${savedBooking.bookingId} · ${booking.service}</strong><br>` +
+      `${booking.master}<br>` +
+      `Було: ${savedBooking.date} о ${savedBooking.time}`;
+
+    currentMonth = new Date();
+    currentMonth.setDate(1);
+    renderCalendar();
+    showScreen("date-screen");
+  }
+);
+
+
 document.querySelector("#repeat-booking-button").addEventListener(
   "click",
   () => {
     const savedBooking = getSavedBooking();
     if (!savedBooking) return;
+
+    rescheduleBookingId = null;
+    setBookingFlowMode("new");
 
     const masterEntry = Object.entries(masters).find(
       ([, master]) => master.name === savedBooking.master

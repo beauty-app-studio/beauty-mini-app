@@ -7,7 +7,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700&family=Playfair+Display:wght@600;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="style.css?v=7.18">
+  <link rel="stylesheet" href="style.css?v=7.20">
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
   <script>
     (function () {
@@ -202,7 +202,7 @@
     <section class="screen" id="date-screen">
       <header class="section-header">
         <button class="back-button" data-back>←</button>
-        <div><p class="eyebrow">Крок 3</p><h2>Оберіть дату</h2></div>
+        <div><p class="eyebrow" id="date-step-eyebrow">Крок 3</p><h2 id="date-step-title">Оберіть дату</h2></div>
       </header>
 
       <div class="summary-card mini-summary" id="date-summary"></div>
@@ -223,7 +223,7 @@
     <section class="screen" id="time-screen">
       <header class="section-header">
         <button class="back-button" data-back>←</button>
-        <div><p class="eyebrow">Крок 4</p><h2>Оберіть час</h2></div>
+        <div><p class="eyebrow" id="time-step-eyebrow">Крок 4</p><h2 id="time-step-title">Оберіть час</h2></div>
       </header>
 
       <div class="summary-card mini-summary" id="time-summary"></div>
@@ -398,6 +398,9 @@
           <button class="soft-action-button late-action-button" id="late-arrival-button">
             ⏰ Я запізнююсь
           </button>
+          <button class="soft-action-button" id="reschedule-booking-button">
+            ↗ Перенести
+          </button>
           <button class="soft-action-button" id="repeat-booking-button">
             ↻ Повторити
           </button>
@@ -570,6 +573,6 @@
     </nav>
   </main>
 
-  <script src="app.js?v=7.18"></script>
+  <script src="app.js?v=7.20"></script>
 </body>
 </html>
