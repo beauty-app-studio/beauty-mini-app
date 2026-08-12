@@ -1,6 +1,6 @@
 
 const API_BASE_URL =
-  "https://agents-oxygen-three-dog.trycloudflare.com";
+  "https://wood-treasury-tournaments-dispatch.trycloudflare.com";
 
 const masters = {
   nails: {
