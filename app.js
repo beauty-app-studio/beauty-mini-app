@@ -1,6 +1,6 @@
 
 const API_BASE_URL =
-  "https://wood-treasury-tournaments-dispatch.trycloudflare.com";
+  "https://acknowledged-washer-answering-relate.trycloudflare.com";
 
 const masters = {
   nails: {
