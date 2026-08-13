@@ -1,6 +1,6 @@
 
 const API_BASE_URL =
-  "https://acknowledged-washer-answering-relate.trycloudflare.com";
+  "https://deployment-democracy-isp-instance.trycloudflare.com";
 
 const masters = {
   nails: {
