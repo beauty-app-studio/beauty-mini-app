@@ -798,3 +798,28 @@ body:has(#late-arrival-message:focus) .bottom-nav{
 @media(max-width:360px){
   .visit-mode-options{grid-template-columns:1fr}
 }
+
+
+/* v7.25.2 — стабільна навігація без стрибків і накладання екранів */
+html,
+body{
+  scroll-behavior:auto!important;
+  overflow-anchor:none;
+  overscroll-behavior-y:none;
+}
+body{
+  overflow-x:hidden;
+}
+.screen{
+  display:none!important;
+  width:100%;
+}
+.screen.active{
+  display:block!important;
+}
+.screen[hidden]{
+  display:none!important;
+}
+.app-shell{
+  isolation:isolate;
+}

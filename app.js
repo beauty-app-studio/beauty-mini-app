@@ -172,7 +172,7 @@ async function apiPost(path, payload) {
     });
   } catch (error) {
     const networkError = new Error(
-      "Немає зв’язку із сервером запису. Перевірте, чи запущені API та Cloudflare Tunnel."
+      "Не вдалося зв’язатися із сервером запису. Спробуйте ще раз за кілька секунд."
     );
     networkError.cause = error;
     throw networkError;
@@ -594,6 +594,12 @@ function renderFavorites() {
 
 const screens = document.querySelectorAll(".screen");
 const navItems = document.querySelectorAll(".nav-item");
+
+screens.forEach(screen => {
+  const isActive = screen.classList.contains("active");
+  screen.hidden = !isActive;
+  screen.setAttribute("aria-hidden", String(!isActive));
+});
 const historyStack = ["home-screen"];
 const VISIT_MODE_LABELS = {
   standard: "Без побажань",
@@ -749,13 +755,52 @@ function setProfileSetupMode(mode = "first") {
 }
 
 
-function showScreen(id, add = true) {
-  screens.forEach(screen => {
-    screen.classList.toggle("active", screen.id === id);
+function resetScreenViewport() {
+  const scrollingElement =
+    document.scrollingElement || document.documentElement;
+
+  scrollingElement.scrollTop = 0;
+  document.documentElement.scrollTop = 0;
+  document.body.scrollTop = 0;
+  window.scrollTo(0, 0);
+
+  requestAnimationFrame(() => {
+    scrollingElement.scrollTop = 0;
+    document.documentElement.scrollTop = 0;
+    document.body.scrollTop = 0;
+    window.scrollTo(0, 0);
   });
 
-  if (add && historyStack.at(-1) !== id) {
-    historyStack.push(id);
+  setTimeout(() => {
+    scrollingElement.scrollTop = 0;
+    document.documentElement.scrollTop = 0;
+    document.body.scrollTop = 0;
+    window.scrollTo(0, 0);
+  }, 60);
+}
+
+
+function showScreen(id, add = true) {
+  const targetScreen = document.getElementById(id);
+  if (!targetScreen) return;
+
+  document.activeElement?.blur?.();
+
+  screens.forEach(screen => {
+    const isTarget = screen === targetScreen;
+    screen.hidden = !isTarget;
+    screen.classList.toggle("active", isTarget);
+    screen.setAttribute("aria-hidden", String(!isTarget));
+  });
+
+  if (add) {
+    const existingIndex = historyStack.lastIndexOf(id);
+
+    if (existingIndex >= 0) {
+      historyStack.splice(existingIndex + 1);
+    } else {
+      historyStack.push(id);
+    }
   }
 
   navItems.forEach(item => {
@@ -766,12 +811,14 @@ function showScreen(id, add = true) {
   if (id === "client-profile-screen") syncClientBookings();
   if (id === "contacts-screen") prefillCallbackPhone();
 
-  window.scrollTo({ top: 0, behavior: "smooth" });
+  getTelegramWebApp()?.expand?.();
+  resetScreenViewport();
 }
 
 document.querySelectorAll("[data-open]").forEach(button => {
   button.addEventListener("click", () => {
     const target = button.dataset.open;
+    const isRootNavigation = button.classList.contains("nav-item");
 
     if (
       preferredProfileBookingId !== null &&
@@ -804,7 +851,12 @@ document.querySelectorAll("[data-open]").forEach(button => {
       }
     }
 
-    showScreen(target);
+    if (isRootNavigation) {
+      historyStack.splice(0, historyStack.length, target);
+      showScreen(target, false);
+    } else {
+      showScreen(target);
+    }
   });
 });
 
