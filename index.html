@@ -7,7 +7,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700&family=Playfair+Display:wght@600;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="style.css?v=7.20.1">
+  <link rel="stylesheet" href="style.css?v=7.25">
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
   <script>
     (function () {
@@ -259,6 +259,35 @@
       </div>
 
       <form id="booking-form" class="booking-form booking-form-final">
+        <section class="visit-preference-card">
+          <div class="visit-preference-heading">
+            <div>
+              <strong>Комфорт під час візиту</strong>
+              <small>Необов’язково</small>
+            </div>
+            <span>🌿</span>
+          </div>
+
+          <div class="visit-mode-options" role="group" aria-label="Комфорт під час візиту">
+            <button class="visit-mode-button selected" type="button" data-visit-mode="standard" aria-pressed="true">
+              Без побажань
+            </button>
+            <button class="visit-mode-button" type="button" data-visit-mode="quiet" aria-pressed="false">
+              Хочу тиші
+            </button>
+            <button class="visit-mode-button" type="button" data-visit-mode="social" aria-pressed="false">
+              Можна спілкуватися
+            </button>
+            <button class="visit-mode-button" type="button" data-visit-mode="consultation" aria-pressed="false">
+              Потрібна консультація
+            </button>
+          </div>
+
+          <p class="visit-preference-note">
+            Майстер побачить побажання перед візитом. Його можна не обирати.
+          </p>
+        </section>
+
         <div class="form-heading">
           <strong>Контактні дані</strong>
           <small>Ми використаємо їх лише для цього запису та зв’язку із салоном.</small>
@@ -583,6 +612,6 @@
     </nav>
   </main>
 
-  <script src="app.js?v=7.23.3"></script>
+  <script src="app.js?v=7.25"></script>
 </body>
 </html>

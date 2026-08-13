@@ -285,7 +285,7 @@ function getDisplayUser() {
     name: savedName,
     username: telegramUser?.username
       ? `@${telegramUser.username}`
-      : "Telegram username відсутній",
+      : "",
     photo: telegramUser?.photo_url || "",
     isConfigured: Boolean(savedName),
   };
@@ -341,6 +341,10 @@ function normalizeServerBooking(item) {
     date: formatIsoDate(item.booking_date),
     time: item.booking_time,
     bookingId: item.booking_id,
+    visitMode: item.visit_mode || "standard",
+    visitModeLabel:
+      item.visit_mode_label ||
+      visitModeLabel(item.visit_mode || "standard"),
     status: item.status,
   };
 }
@@ -365,7 +369,10 @@ function renderClientProfile() {
   if (profileName) {
     profileName.textContent = user.name || "Профіль не налаштовано";
   }
-  if (profileUsername) profileUsername.textContent = user.username;
+  if (profileUsername) {
+    profileUsername.textContent = user.username;
+    profileUsername.hidden = !user.username;
+  }
   if (favoriteCount) favoriteCount.textContent = favorites.length;
   if (visitCount) visitCount.textContent = completedVisitCount;
 
@@ -420,6 +427,12 @@ function renderClientProfile() {
   if (selectedLabel) selectedLabel.style.display = "block";
 
   const status = savedBooking.status || "new";
+  const savedVisitMode =
+    savedBooking.visitMode || savedBooking.visit_mode || "standard";
+  const visitPreference =
+    savedVisitMode !== "standard"
+      ? `<div class="booking-preference-note">🌿 ${visitModeLabel(savedVisitMode)}</div>`
+      : "";
 
   card.innerHTML = `
     <div class="booking-ticket-top">
@@ -447,7 +460,8 @@ function renderClientProfile() {
         <small>Вартість</small>
         <strong>${savedBooking.price}</strong>
       </div>
-    </div>`;
+    </div>
+    ${visitPreference}`;
 
   actions.style.display =
     ["new", "confirmed"].includes(status) ? "grid" : "none";
@@ -581,6 +595,17 @@ function renderFavorites() {
 const screens = document.querySelectorAll(".screen");
 const navItems = document.querySelectorAll(".nav-item");
 const historyStack = ["home-screen"];
+const VISIT_MODE_LABELS = {
+  standard: "Без побажань",
+  quiet: "Хочу тиші",
+  social: "Можна спілкуватися",
+  consultation: "Потрібна консультація",
+};
+
+function visitModeLabel(value) {
+  return VISIT_MODE_LABELS[value] || VISIT_MODE_LABELS.standard;
+}
+
 const booking = {
   master: "",
   masterKey: "",
@@ -589,6 +614,7 @@ const booking = {
   duration: "",
   date: "",
   time: "",
+  visitMode: "standard",
 };
 
 let currentMonth = new Date();
@@ -655,6 +681,24 @@ function setBookingFlowMode(mode = "new") {
 }
 
 
+function renderVisitModeSelection() {
+  document.querySelectorAll("[data-visit-mode]").forEach(button => {
+    const selected = button.dataset.visitMode === booking.visitMode;
+    button.classList.toggle("selected", selected);
+    button.setAttribute("aria-pressed", String(selected));
+  });
+}
+
+
+document.querySelectorAll("[data-visit-mode]").forEach(button => {
+  button.addEventListener("click", () => {
+    booking.visitMode = button.dataset.visitMode || "standard";
+    renderVisitModeSelection();
+    renderSummary();
+  });
+});
+
+
 function resetBookingFlow() {
   booking.master = "";
   booking.masterKey = "";
@@ -663,6 +707,8 @@ function resetBookingFlow() {
   booking.duration = "";
   booking.date = "";
   booking.time = "";
+  booking.visitMode = "standard";
+  renderVisitModeSelection();
   activeMasterKey = null;
   rescheduleBookingId = null;
   setBookingFlowMode("new");
@@ -1091,6 +1137,10 @@ async function renderTimes() {
 function renderSummary() {
   const summary = document.querySelector("#booking-summary");
   const submitButton = document.querySelector("#booking-submit-button");
+  const visitModeRow =
+    booking.visitMode !== "standard"
+      ? `<div class="review-detail-row visit-mode-summary"><span>🌿 Комфорт</span><strong>${visitModeLabel(booking.visitMode)}</strong></div>`
+      : "";
 
   if (summary) {
     summary.innerHTML =
@@ -1102,7 +1152,8 @@ function renderSummary() {
       `<div class="review-detail-row"><span>👩‍🎨 Майстер</span><strong>${booking.master}</strong></div>` +
       `<div class="review-detail-row"><span>📅 Дата</span><strong>${booking.date}</strong></div>` +
       `<div class="review-detail-row"><span>🕒 Час</span><strong>${booking.time}</strong></div>` +
-      `<div class="review-detail-row"><span>⏳ Тривалість</span><strong>${booking.duration}</strong></div>`;
+      `<div class="review-detail-row"><span>⏳ Тривалість</span><strong>${booking.duration}</strong></div>` +
+      visitModeRow;
   }
 
   if (submitButton) {
@@ -1179,6 +1230,7 @@ document.querySelector("#booking-form").addEventListener(
         master: booking.master,
         booking_date: booking.date,
         booking_time: booking.time,
+        visit_mode: booking.visitMode,
         init_data: initData,
       });
 
@@ -1226,7 +1278,10 @@ document.querySelector("#booking-form").addEventListener(
           `<div class="success-ticket-row"><span>👩‍🎨 Майстер</span><strong>${booking.master}</strong></div>` +
           `<div class="success-ticket-row"><span>📅 Дата</span><strong>${booking.date}</strong></div>` +
           `<div class="success-ticket-row"><span>🕒 Час</span><strong>${booking.time}</strong></div>` +
-          `<div class="success-ticket-row"><span>⏳ Тривалість</span><strong>${booking.duration}</strong></div>`;
+          `<div class="success-ticket-row"><span>⏳ Тривалість</span><strong>${booking.duration}</strong></div>` +
+          (booking.visitMode !== "standard"
+            ? `<div class="success-ticket-row"><span>🌿 Комфорт</span><strong>${visitModeLabel(booking.visitMode)}</strong></div>`
+            : "");
       }
 
       tg?.HapticFeedback?.notificationOccurred("success");

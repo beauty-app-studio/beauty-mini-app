@@ -715,3 +715,86 @@ body:has(#late-arrival-message:focus) .bottom-nav{
 .reschedule-confirm-button[hidden]{
   display:none !important;
 }
+
+
+/* v7.25 — необов'язковий комфорт під час візиту */
+.visit-preference-card{
+  margin:0 0 18px;
+  padding:16px;
+  border:1px solid var(--border);
+  border-radius:20px;
+  background:linear-gradient(145deg,#fff,#fff7fa);
+}
+.visit-preference-heading{
+  display:flex;
+  align-items:flex-start;
+  justify-content:space-between;
+  gap:12px;
+  margin-bottom:12px;
+}
+.visit-preference-heading>div{
+  display:flex;
+  flex-direction:column;
+  gap:3px;
+}
+.visit-preference-heading strong{
+  font-size:15px;
+}
+.visit-preference-heading small,
+.visit-preference-note{
+  color:var(--muted);
+}
+.visit-preference-heading>span{
+  display:grid;
+  place-items:center;
+  width:34px;
+  height:34px;
+  border-radius:12px;
+  background:var(--soft);
+}
+.visit-mode-options{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:8px;
+}
+.visit-mode-button{
+  min-height:48px;
+  padding:10px 11px;
+  border:1px solid var(--border);
+  border-radius:14px;
+  background:#fff;
+  color:var(--text);
+  font-size:13px;
+  font-weight:700;
+  line-height:1.25;
+  cursor:pointer;
+}
+.visit-mode-button.selected{
+  border-color:var(--accent);
+  background:var(--soft);
+  color:var(--accent-dark);
+  box-shadow:0 8px 18px rgba(255,79,135,.10);
+}
+.visit-preference-note{
+  margin:11px 0 0;
+  font-size:12px;
+  line-height:1.45;
+}
+.visit-mode-summary{
+  background:#fff8fa;
+}
+.booking-preference-note{
+  margin-top:12px;
+  padding:11px 13px;
+  border-radius:14px;
+  background:var(--soft);
+  color:var(--accent-dark);
+  font-size:13px;
+  font-weight:700;
+}
+#client-profile-username[hidden]{
+  display:none;
+}
+@media(max-width:360px){
+  .visit-mode-options{grid-template-columns:1fr}
+}
