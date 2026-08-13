@@ -14,7 +14,7 @@
   "deployment": {
     "mini_app_url": "https://beauty-app-studio.github.io/beauty-mini-app/?v=7.30.0",
     "app_origin": "https://beauty-app-studio.github.io",
-    "api_base_url": "https://deployment-democracy-isp-instance.trycloudflare.com"
+    "api_base_url": "https://indicating-gourmet-washington-once.trycloudflare.com"
   },
   "schedule": {
     "start_hour": 9,
