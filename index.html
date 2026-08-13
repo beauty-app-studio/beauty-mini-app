@@ -3,11 +3,11 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Beauty Studio</title>
+  <title>Салон краси</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700&family=Playfair+Display:wght@600;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="style.css?v=7.25.2">
+  <link rel="stylesheet" href="style.css?v=7.30.0">
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
   <script>
     (function () {
@@ -29,29 +29,50 @@
     })();
   </script>
 </head>
-<body>
+<body class="config-loading">
+  <section class="app-startup" id="app-startup" role="status" aria-live="polite">
+    <div class="startup-card">
+      <div class="startup-mark">✦</div>
+      <h1 id="app-startup-title">Відкриваємо салон…</h1>
+      <p id="app-startup-description">Завантажуємо послуги, майстрів і розклад.</p>
+      <div class="startup-loader" aria-hidden="true"></div>
+      <button class="secondary-button" id="app-startup-retry" type="button" hidden>
+        Спробувати ще раз
+      </button>
+    </div>
+  </section>
+
   <main class="app-shell">
+    <section class="server-status-banner" id="server-status-banner" hidden>
+      <span>!</span>
+      <div>
+        <strong>Онлайн-запис тимчасово недоступний</strong>
+        <small>Каталог можна переглядати. Спробуйте відновити зв’язок.</small>
+      </div>
+      <button id="server-status-retry" type="button">Повторити</button>
+    </section>
+
     <section class="screen active" id="home-screen">
       <header class="topbar">
         <div>
           <p class="eyebrow">Telegram Mini App</p>
-          <h1>Beauty Studio</h1>
+          <h1 data-salon-name>Салон краси</h1>
         </div>
         <button class="icon-button" id="home-favorites-button" aria-label="Улюблені майстри">♡</button>
       </header>
 
       <section class="welcome-strip">
         <div>
-          <p class="eyebrow">Ваш простір краси</p>
+          <p class="eyebrow" data-salon-tagline>Ваш простір краси</p>
           <h2 id="home-greeting">Раді бачити вас 🌸</h2>
         </div>
         <div class="mini-avatar" id="home-avatar">B</div>
       </section>
 
       <section class="hero">
-        <img src="https://images.unsplash.com/photo-1600948836101-f9ffda59d250?auto=format&fit=crop&w=1200&q=85" alt="Інтер'єр салону">
+        <img id="home-hero-image" src="" alt="Інтер'єр салону">
         <div class="hero-overlay">
-          <span class="badge">Простір вашої краси</span>
+          <span class="badge" data-salon-tagline>Ваш простір краси</span>
           <h2>Ласкаво просимо</h2>
           <p>Оберіть послугу, майстра та зручний час за кілька хвилин.</p>
         </div>
@@ -70,11 +91,11 @@
         </button>
         <button class="quick-card" id="address-button">
           <span class="quick-icon">📍</span>
-          <span><strong>Адреса</strong><small>Київ, вул. Хрещатик, 1</small></span>
+          <span><strong>Адреса</strong><small data-salon-address>Адреса салону</small></span>
         </button>
         <button class="quick-card" data-open="contacts-screen" type="button">
           <span class="quick-icon">☎️</span>
-          <span><strong>Контакти</strong><small>+380 67 123 45 67</small></span>
+          <span><strong>Контакти</strong><small data-salon-phone>Телефон салону</small></span>
         </button>
       </section>
     </section>
@@ -88,38 +109,7 @@
       <div class="selected-chip" id="masters-filter-chip" hidden></div>
 
       <div class="master-list">
-        <article class="master-card compact">
-          <img src="https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&w=700&q=85" alt="Майстер нігтьового сервісу">
-          <div class="master-content">
-            <div class="master-title-row">
-              <div><h3>Майстер нігтьового сервісу</h3><p>Манікюр · Педикюр</p></div>
-              <span class="rating">★ 4.9</span>
-            </div>
-            <button class="secondary-button profile-open" data-master-key="nails">Переглянути профіль</button>
-          </div>
-        </article>
-
-        <article class="master-card compact">
-          <img src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=700&q=85" alt="Стиліст-колорист">
-          <div class="master-content">
-            <div class="master-title-row">
-              <div><h3>Стиліст-колорист</h3><p>Фарбування · Стрижки</p></div>
-              <span class="rating">★ 4.8</span>
-            </div>
-            <button class="secondary-button profile-open" data-master-key="colorist">Переглянути профіль</button>
-          </div>
-        </article>
-
-        <article class="master-card compact">
-          <img src="https://images.unsplash.com/photo-1544005313-94ddf0286df2?auto=format&fit=crop&w=700&q=85" alt="Універсальний майстер">
-          <div class="master-content">
-            <div class="master-title-row">
-              <div><h3>Універсальний майстер</h3><p>Укладки · Стрижки · Догляд</p></div>
-              <span class="rating">★ 5.0</span>
-            </div>
-            <button class="secondary-button profile-open" data-master-key="universal">Переглянути профіль</button>
-          </div>
-        </article>
+        <div class="catalog-placeholder">Завантажуємо майстрів…</div>
       </div>
     </section>
 
@@ -181,21 +171,7 @@
       <div class="selected-chip" id="selected-master-chip">Майстер ще не обраний</div>
 
       <div class="service-list">
-        <button class="service-card" data-service="Манікюр" data-price="800 грн" data-duration="90 хв">
-          <div><strong>Манікюр</strong><small>90 хвилин</small></div><span>800 грн</span>
-        </button>
-        <button class="service-card" data-service="Педикюр" data-price="1200 грн" data-duration="120 хв">
-          <div><strong>Педикюр</strong><small>120 хвилин</small></div><span>1200 грн</span>
-        </button>
-        <button class="service-card" data-service="Стрижка" data-price="1000 грн" data-duration="60 хв">
-          <div><strong>Стрижка</strong><small>60 хвилин</small></div><span>1000 грн</span>
-        </button>
-        <button class="service-card" data-service="Фарбування" data-price="3500 грн" data-duration="180 хв">
-          <div><strong>Фарбування</strong><small>180 хвилин</small></div><span>3500 грн</span>
-        </button>
-        <button class="service-card" data-service="Укладка" data-price="900 грн" data-duration="60 хв">
-          <div><strong>Укладка</strong><small>60 хвилин</small></div><span>900 грн</span>
-        </button>
+        <div class="catalog-placeholder">Завантажуємо послуги…</div>
       </div>
     </section>
 
@@ -300,7 +276,7 @@
 
         <label>
           <span>Номер телефону</span>
-          <input id="client-phone" type="tel" inputmode="tel" autocomplete="tel" placeholder="+380671234567" required>
+          <input id="client-phone" type="tel" inputmode="tel" autocomplete="tel" placeholder="Номер телефону" required>
         </label>
 
         <div class="booking-confirm-note">
@@ -515,7 +491,7 @@
               placeholder="Наприклад: вже в дорозі, затримуюсь через затор"
             ></textarea>
           </label>
-<button class="primary-button" id="late-arrival-submit" type="submit" disabled>
+          <button class="primary-button" id="late-arrival-submit" type="submit" disabled>
             Повідомити про запізнення
           </button>
         </form>
@@ -527,7 +503,7 @@
       <header class="section-header">
         <button class="back-button" data-back>←</button>
         <div>
-          <p class="eyebrow">Beauty Studio</p>
+          <p class="eyebrow" data-salon-name>Салон краси</p>
           <h2>Контакти</h2>
         </div>
       </header>
@@ -540,12 +516,12 @@
 
         <div class="contact-number-card contact-number-static">
           <span>Телефон салону</span>
-          <strong>+380 67 123 45 67</strong>
+          <strong data-salon-phone>Телефон салону</strong>
         </div>
 
         <label class="contact-phone-field">
           <span>На який номер вам передзвонити?</span>
-          <input id="callback-phone" type="tel" inputmode="tel" autocomplete="tel" placeholder="+380671234567">
+          <input id="callback-phone" type="tel" inputmode="tel" autocomplete="tel" placeholder="Номер телефону">
         </label>
 
         <button class="primary-button contact-action-button" id="request-callback-button" type="button">
@@ -563,8 +539,16 @@
         <div class="contact-info-card">
           <span>📍</span>
           <div>
-            <strong>Beauty Studio</strong>
-            <small>Київ, вул. Хрещатик, 1</small>
+            <strong data-salon-name>Салон краси</strong>
+            <small data-salon-address>Адреса салону</small>
+          </div>
+        </div>
+
+        <div class="contact-info-card">
+          <span>🕒</span>
+          <div>
+            <strong>Графік роботи</strong>
+            <small data-salon-work-time>Уточнюємо графік</small>
           </div>
         </div>
 
@@ -612,6 +596,6 @@
     </nav>
   </main>
 
-  <script src="app.js?v=7.25.2"></script>
+  <script src="app.js?v=7.30.0"></script>
 </body>
 </html>

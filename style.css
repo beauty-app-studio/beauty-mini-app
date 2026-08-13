@@ -66,8 +66,8 @@
 .edit-profile-name{position:absolute;right:16px;bottom:14px;border:0;background:transparent;color:var(--accent-dark);font-size:11px;font-weight:700;cursor:pointer}
 
 /* v6: contrast, availability and interactive states */
-html{color-scheme:light;background:#f8f5f6}
-body{background:radial-gradient(circle at top right,#ffe3ec 0,transparent 35%),#f8f5f6!important;color:#272326!important}
+html{color-scheme:light;background:var(--page)}
+body{background:radial-gradient(circle at top right,#ffe3ec 0,transparent 35%),var(--page)!important;color:#272326!important}
 .topbar h1,.welcome-strip h2,.section-header h2{color:#272326}
 .welcome-strip{padding:16px 16px;border:1px solid #efdfe5;border-radius:22px;background:linear-gradient(135deg,rgba(255,255,255,.98),rgba(255,241,245,.96));box-shadow:0 10px 26px rgba(85,45,61,.06)}
 .welcome-strip .eyebrow{color:#d93e72}
@@ -822,4 +822,139 @@ body{
 }
 .app-shell{
   isolation:isolate;
+}
+
+
+/* v7.30 — Salon Ready: configuration bootstrap and API status */
+.config-loading{
+  overflow:hidden;
+}
+.config-loading .app-shell{
+  visibility:hidden;
+}
+.app-startup[hidden],
+.server-status-banner[hidden],
+#app-startup-retry[hidden]{
+  display:none!important;
+}
+.app-startup{
+  position:fixed;
+  z-index:100;
+  inset:0;
+  display:grid;
+  place-items:center;
+  padding:24px;
+  background:
+    radial-gradient(circle at top right,#ffe3ec 0,transparent 42%),
+    var(--page);
+}
+.startup-card{
+  width:min(100%,390px);
+  padding:34px 25px;
+  border:1px solid var(--border);
+  border-radius:30px;
+  background:rgba(255,255,255,.96);
+  text-align:center;
+  box-shadow:var(--shadow);
+}
+.startup-mark{
+  width:72px;
+  height:72px;
+  margin:0 auto 19px;
+  display:grid;
+  place-items:center;
+  border-radius:24px;
+  background:linear-gradient(145deg,var(--soft),#fff);
+  color:var(--accent-dark);
+  font-size:32px;
+  box-shadow:0 12px 28px rgba(255,79,135,.14);
+}
+.startup-card h1{
+  margin-bottom:10px;
+  font-size:28px;
+}
+.startup-card p{
+  margin-bottom:18px;
+  color:var(--muted);
+  line-height:1.55;
+}
+.startup-loader{
+  width:28px;
+  height:28px;
+  margin:4px auto 0;
+  border:3px solid #f5dce5;
+  border-top-color:var(--accent);
+  border-radius:50%;
+  animation:startupSpin .8s linear infinite;
+}
+#app-startup-retry:not([hidden]) + .startup-loader,
+.startup-card:has(#app-startup-retry:not([hidden])) .startup-loader{
+  display:none;
+}
+#app-startup-retry{
+  margin-top:6px;
+}
+@keyframes startupSpin{
+  to{transform:rotate(360deg)}
+}
+.server-status-banner{
+  margin:0 0 16px;
+  padding:13px 14px;
+  display:grid;
+  grid-template-columns:30px 1fr auto;
+  align-items:center;
+  gap:10px;
+  border:1px solid #f0ccd5;
+  border-radius:18px;
+  background:#fff5f7;
+  color:#8d3f54;
+}
+.server-status-banner>span{
+  width:28px;
+  height:28px;
+  display:grid;
+  place-items:center;
+  border-radius:50%;
+  background:#ffe0e7;
+  font-weight:900;
+}
+.server-status-banner div{
+  min-width:0;
+  display:grid;
+  gap:3px;
+}
+.server-status-banner strong{
+  font-size:13px;
+}
+.server-status-banner small{
+  color:#a65d70;
+  font-size:11px;
+  line-height:1.35;
+}
+.server-status-banner button{
+  padding:8px 10px;
+  border:0;
+  border-radius:10px;
+  background:#fff;
+  color:#9b3f59;
+  font-size:11px;
+  font-weight:800;
+  cursor:pointer;
+}
+.catalog-placeholder{
+  padding:30px 18px;
+  border:1px solid var(--border);
+  border-radius:22px;
+  background:#fff;
+  color:var(--muted);
+  text-align:center;
+}
+@media(max-width:380px){
+  .server-status-banner{
+    grid-template-columns:28px 1fr;
+  }
+  .server-status-banner button{
+    grid-column:2;
+    justify-self:start;
+  }
 }

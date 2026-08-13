@@ -1,0 +1,118 @@
+{
+  "version": "7.30.0",
+  "salon": {
+    "name": "Beauty Studio",
+    "tagline": "Ваш простір краси",
+    "city": "Київ",
+    "address": "Київ, вул. Хрещатик, 1",
+    "phone_display": "+380 67 123 45 67",
+    "phone_e164": "+380671234567",
+    "work_time": "щодня з 09:00 до 20:00",
+    "hero_image": "https://images.unsplash.com/photo-1600948836101-f9ffda59d250?auto=format&fit=crop&w=1200&q=85",
+    "map_url": "https://www.google.com/maps/search/?api=1&query=%D0%9A%D0%B8%D1%97%D0%B2%2C%20%D0%B2%D1%83%D0%BB.%20%D0%A5%D1%80%D0%B5%D1%89%D0%B0%D1%82%D0%B8%D0%BA%2C%201"
+  },
+  "deployment": {
+    "mini_app_url": "https://beauty-app-studio.github.io/beauty-mini-app/?v=7.30.0",
+    "app_origin": "https://beauty-app-studio.github.io",
+    "api_base_url": "https://deployment-democracy-isp-instance.trycloudflare.com"
+  },
+  "schedule": {
+    "start_hour": 9,
+    "end_hour": 20,
+    "slot_step_minutes": 30
+  },
+  "theme": {
+    "accent": "#ff4f87",
+    "accent_dark": "#e73d73",
+    "soft": "#fff1f5",
+    "page": "#f8f5f6"
+  },
+  "services": {
+    "manicure": {
+      "name": "Манікюр",
+      "price": "800 грн",
+      "duration": 90,
+      "icon": "💅"
+    },
+    "pedicure": {
+      "name": "Педикюр",
+      "price": "1200 грн",
+      "duration": 120,
+      "icon": "🦶"
+    },
+    "coloring": {
+      "name": "Фарбування",
+      "price": "3500 грн",
+      "duration": 180,
+      "icon": "🎨"
+    },
+    "haircut": {
+      "name": "Стрижка",
+      "price": "1000 грн",
+      "duration": 60,
+      "icon": "✂️"
+    },
+    "styling": {
+      "name": "Укладка",
+      "price": "900 грн",
+      "duration": 60,
+      "icon": "✨"
+    }
+  },
+  "masters": {
+    "master_1": {
+      "legacy_key": "nails",
+      "name": "Майстер нігтьового сервісу",
+      "specialty": "Манікюр · Педикюр · Nail-дизайн",
+      "services": ["manicure", "pedicure"],
+      "workdays": [1, 2, 3, 4, 5, 6],
+      "photo": "https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&w=1000&q=88",
+      "rating": "4.9",
+      "experience": "7 років",
+      "clients": "900+",
+      "about": "Спеціалізується на акуратних формах, делікатному покритті та природному дизайні. Працює уважно, спокійно й завжди пояснює кожний етап процедури.",
+      "review": "Дуже акуратно, красиво й без поспіху. Саме той результат, який я хотіла.",
+      "portfolio": [
+        "https://images.unsplash.com/photo-1604654894610-df63bc536371?auto=format&fit=crop&w=800&q=85",
+        "https://images.unsplash.com/photo-1610992015732-2449b76344bc?auto=format&fit=crop&w=800&q=85",
+        "https://images.unsplash.com/photo-1632345031435-8727f6897d53?auto=format&fit=crop&w=800&q=85"
+      ]
+    },
+    "master_2": {
+      "legacy_key": "colorist",
+      "name": "Стиліст-колорист",
+      "specialty": "Фарбування · Стрижки · Укладки",
+      "services": ["coloring", "haircut", "styling"],
+      "workdays": [2, 3, 4, 5, 6, 7],
+      "photo": "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=1000&q=88",
+      "rating": "4.8",
+      "experience": "9 років",
+      "clients": "1 200+",
+      "about": "Підбирає колір і форму зачіски під тон шкіри, риси обличчя та спосіб життя. Працює із сучасними техніками фарбування й дбайливим відновленням волосся.",
+      "review": "Колір вийшов натуральним і дуже дорогим на вигляд. Отримала багато компліментів.",
+      "portfolio": [
+        "https://images.unsplash.com/photo-1562322140-8baeececf3df?auto=format&fit=crop&w=800&q=85",
+        "https://images.unsplash.com/photo-1522337360788-8b13dee7a37e?auto=format&fit=crop&w=800&q=85",
+        "https://images.unsplash.com/photo-1560869713-7d0a29430803?auto=format&fit=crop&w=800&q=85"
+      ]
+    },
+    "master_3": {
+      "legacy_key": "universal",
+      "name": "Універсальний майстер",
+      "specialty": "Образ · Догляд · Консультація",
+      "services": ["manicure", "pedicure", "coloring", "haircut", "styling"],
+      "workdays": [1, 3, 4, 5, 6],
+      "photo": "https://images.unsplash.com/photo-1544005313-94ddf0286df2?auto=format&fit=crop&w=1000&q=88",
+      "rating": "5.0",
+      "experience": "6 років",
+      "clients": "700+",
+      "about": "Допомагає визначитися з процедурою та створює цілісний образ. Добре підходить клієнтам, які хочуть змін, але ще не знають, з чого почати.",
+      "review": "Я не знала, чого хочу, але майстер усе підібрала і результат перевершив очікування.",
+      "portfolio": [
+        "https://images.unsplash.com/photo-1524250502761-1ac6f2e30d43?auto=format&fit=crop&w=800&q=85",
+        "https://images.unsplash.com/photo-1487412720507-e7ab37603c6f?auto=format&fit=crop&w=800&q=85",
+        "https://images.unsplash.com/photo-1524504388940-b1c1722653e1?auto=format&fit=crop&w=800&q=85"
+      ]
+    }
+  }
+}

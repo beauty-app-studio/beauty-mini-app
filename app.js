@@ -1,66 +1,231 @@
+const APP_VERSION = "7.30.0";
+const CONFIG_URL = `salon_config.json?v=${APP_VERSION}`;
 
-const API_BASE_URL =
-  "https://deployment-democracy-isp-instance.trycloudflare.com";
+let salonConfig = null;
+let API_BASE_URL = "";
+let SALON_NAME = "Салон краси";
+let SALON_PHONE = "";
+let SALON_PHONE_DISPLAY = "";
+let SALON_ADDRESS = "";
+let SALON_MAP_URL = "";
+let masters = {};
+let serviceCatalog = {};
 
-const masters = {
-  nails: {
-    name: "Майстер нігтьового сервісу",
-    specialty: "Манікюр · Педикюр · Nail-дизайн",
-    services: ["Манікюр", "Педикюр"],
-    workdays: [1, 2, 3, 4, 5, 6],
-    photo: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&w=1000&q=88",
-    rating: "4.9",
-    experience: "7 років",
-    clients: "900+",
-    about: "Спеціалізується на акуратних формах, делікатному покритті та природному дизайні. Працює уважно, спокійно й завжди пояснює кожний етап процедури.",
-    review: "Дуже акуратно, красиво й без поспіху. Саме той результат, який я хотіла.",
-    portfolio: [
-      "https://images.unsplash.com/photo-1604654894610-df63bc536371?auto=format&fit=crop&w=800&q=85",
-      "https://images.unsplash.com/photo-1610992015732-2449b76344bc?auto=format&fit=crop&w=800&q=85",
-      "https://images.unsplash.com/photo-1632345031435-8727f6897d53?auto=format&fit=crop&w=800&q=85"
-    ]
-  },
-  colorist: {
-    name: "Стиліст-колорист",
-    specialty: "Фарбування · Стрижки · Укладки",
-    services: ["Фарбування", "Стрижка", "Укладка"],
-    workdays: [0, 2, 3, 4, 5, 6],
-    photo: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=1000&q=88",
-    rating: "4.8",
-    experience: "9 років",
-    clients: "1 200+",
-    about: "Підбирає колір і форму зачіски під тон шкіри, риси обличчя та спосіб життя. Працює із сучасними техніками фарбування й дбайливим відновленням волосся.",
-    review: "Колір вийшов натуральним і дуже дорогим на вигляд. Отримала багато компліментів.",
-    portfolio: [
-      "https://images.unsplash.com/photo-1562322140-8baeececf3df?auto=format&fit=crop&w=800&q=85",
-      "https://images.unsplash.com/photo-1522337360788-8b13dee7a37e?auto=format&fit=crop&w=800&q=85",
-      "https://images.unsplash.com/photo-1560869713-7d0a29430803?auto=format&fit=crop&w=800&q=85"
-    ]
-  },
-  universal: {
-    name: "Універсальний майстер",
-    specialty: "Образ · Догляд · Консультація",
-    services: ["Манікюр", "Педикюр", "Фарбування", "Стрижка", "Укладка"],
-    workdays: [1, 3, 4, 5, 6],
-    photo: "https://images.unsplash.com/photo-1544005313-94ddf0286df2?auto=format&fit=crop&w=1000&q=88",
-    rating: "5.0",
-    experience: "6 років",
-    clients: "700+",
-    about: "Допомагає визначитися з процедурою та створює цілісний образ. Добре підходить клієнтам, які хочуть змін, але ще не знають, з чого почати.",
-    review: "Я не знала, чого хочу, але майстер усе підібрала і результат перевершив очікування.",
-    portfolio: [
-      "https://images.unsplash.com/photo-1524250502761-1ac6f2e30d43?auto=format&fit=crop&w=800&q=85",
-      "https://images.unsplash.com/photo-1487412720507-e7ab37603c6f?auto=format&fit=crop&w=800&q=85",
-      "https://images.unsplash.com/photo-1524504388940-b1c1722653e1?auto=format&fit=crop&w=800&q=85"
-    ]
+function escapeHtml(value) {
+  return String(value ?? "")
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;")
+    .replaceAll("'", "&#039;");
+}
+
+function validateSalonConfig(config) {
+  const required = [
+    config?.salon?.name,
+    config?.salon?.address,
+    config?.salon?.phone_e164,
+    config?.deployment?.api_base_url,
+  ];
+
+  if (
+    required.some(value => !String(value || "").trim()) ||
+    !config?.services ||
+    !Object.keys(config.services).length ||
+    !config?.masters ||
+    !Object.keys(config.masters).length
+  ) {
+    throw new Error("Файл salon_config.json заповнений не повністю.");
   }
-};
 
-const SALON_PHONE = "+380671234567";
-const SALON_ADDRESS = "Київ, вул. Хрещатик, 1";
-const SALON_MAP_URL =
-  "https://www.google.com/maps/search/?api=1&query=" +
-  encodeURIComponent(SALON_ADDRESS);
+  Object.entries(config.masters).forEach(([masterKey, master]) => {
+    const unknownService = (master.services || []).find(
+      serviceKey => !config.services[serviceKey]
+    );
+
+    if (unknownService) {
+      throw new Error(
+        `У майстра ${masterKey} вказана невідома послуга ${unknownService}.`
+      );
+    }
+  });
+}
+
+function buildSalonCatalog(config) {
+  serviceCatalog = config.services;
+  masters = Object.fromEntries(
+    Object.entries(config.masters).map(([key, master]) => [
+      key,
+      {
+        ...master,
+        key,
+        legacyKey: master.legacy_key || "",
+        services: (master.services || []).map(
+          serviceKey => config.services[serviceKey].name
+        ),
+        // У конфігурації: 1 = понеділок, 7 = неділя.
+        // Date.getDay(): 0 = неділя, 1 = понеділок.
+        workdays: (master.workdays || []).map(day => Number(day) % 7),
+      },
+    ])
+  );
+}
+
+function renderSalonCatalog() {
+  const masterList = document.querySelector(".master-list");
+  const serviceList = document.querySelector(".service-list");
+
+  if (masterList) {
+    masterList.innerHTML = Object.entries(masters).map(([key, master]) => `
+      <article class="master-card compact">
+        <img src="${escapeHtml(master.photo)}" alt="${escapeHtml(master.name)}">
+        <div class="master-content">
+          <div class="master-title-row">
+            <div>
+              <h3>${escapeHtml(master.name)}</h3>
+              <p>${escapeHtml(master.specialty)}</p>
+            </div>
+            <span class="rating">★ ${escapeHtml(master.rating)}</span>
+          </div>
+          <button class="secondary-button profile-open" data-master-key="${escapeHtml(key)}">
+            Переглянути профіль
+          </button>
+        </div>
+      </article>
+    `).join("");
+  }
+
+  if (serviceList) {
+    serviceList.innerHTML = Object.entries(serviceCatalog)
+      .map(([, service]) => `
+        <button
+          class="service-card"
+          data-service="${escapeHtml(service.name)}"
+          data-price="${escapeHtml(service.price)}"
+          data-duration="${Number(service.duration)} хв"
+        >
+          <div>
+            <strong>${escapeHtml(service.name)}</strong>
+            <small>${Number(service.duration)} хв</small>
+          </div>
+          <span>${escapeHtml(service.price)}</span>
+        </button>
+      `).join("");
+  }
+
+  bindCatalogButtons();
+}
+
+function applySalonConfig(config) {
+  validateSalonConfig(config);
+  salonConfig = config;
+
+  SALON_NAME = String(config.salon.name);
+  SALON_PHONE = String(config.salon.phone_e164);
+  SALON_PHONE_DISPLAY = String(
+    config.salon.phone_display || config.salon.phone_e164
+  );
+  SALON_ADDRESS = String(config.salon.address);
+  SALON_MAP_URL = String(
+    config.salon.map_url ||
+    "https://www.google.com/maps/search/?api=1&query=" +
+      encodeURIComponent(SALON_ADDRESS)
+  );
+  API_BASE_URL = String(config.deployment.api_base_url).replace(/\/$/, "");
+
+  buildSalonCatalog(config);
+
+  document.title = SALON_NAME;
+  document.querySelectorAll("[data-salon-name]").forEach(element => {
+    element.textContent = SALON_NAME;
+  });
+  document.querySelectorAll("[data-salon-address]").forEach(element => {
+    element.textContent = SALON_ADDRESS;
+  });
+  document.querySelectorAll("[data-salon-phone]").forEach(element => {
+    element.textContent = SALON_PHONE_DISPLAY;
+  });
+  document.querySelectorAll("[data-salon-work-time]").forEach(element => {
+    element.textContent = config.salon.work_time || "";
+  });
+  document.querySelectorAll("[data-salon-tagline]").forEach(element => {
+    element.textContent = config.salon.tagline || "Ваш простір краси";
+  });
+
+  const heroImage = document.querySelector("#home-hero-image");
+  if (heroImage && config.salon.hero_image) {
+    heroImage.src = config.salon.hero_image;
+  }
+
+  const theme = config.theme || {};
+  const themeVariables = {
+    "--accent": theme.accent,
+    "--accent-dark": theme.accent_dark,
+    "--soft": theme.soft,
+    "--page": theme.page,
+  };
+  Object.entries(themeVariables).forEach(([name, value]) => {
+    if (value) document.documentElement.style.setProperty(name, value);
+  });
+
+  document.querySelectorAll('input[type="tel"]').forEach(input => {
+    input.placeholder = SALON_PHONE;
+  });
+
+  renderSalonCatalog();
+}
+
+function showConfigFailure(message) {
+  const startup = document.querySelector("#app-startup");
+  const title = document.querySelector("#app-startup-title");
+  const description = document.querySelector("#app-startup-description");
+  const retry = document.querySelector("#app-startup-retry");
+
+  if (startup) startup.hidden = false;
+  if (title) title.textContent = "Не вдалося відкрити салон";
+  if (description) description.textContent = message;
+  if (retry) retry.hidden = false;
+}
+
+function setServerAvailability(isAvailable) {
+  const banner = document.querySelector("#server-status-banner");
+  if (!banner) return;
+  banner.hidden = isAvailable;
+}
+
+async function checkApiHealth() {
+  if (!API_BASE_URL) return false;
+
+  const controller = new AbortController();
+  const timeoutId = window.setTimeout(() => controller.abort(), 6000);
+
+  try {
+    const response = await fetch(`${API_BASE_URL}/health`, {
+      cache: "no-store",
+      signal: controller.signal,
+    });
+    const data = await response.json();
+    const isAvailable = Boolean(response.ok && data?.ok);
+    setServerAvailability(isAvailable);
+    return isAvailable;
+  } catch {
+    setServerAvailability(false);
+    return false;
+  } finally {
+    window.clearTimeout(timeoutId);
+  }
+}
+
+async function loadSalonConfig() {
+  const response = await fetch(CONFIG_URL, { cache: "no-store" });
+  if (!response.ok) {
+    throw new Error("Не вдалося завантажити salon_config.json.");
+  }
+
+  const config = await response.json();
+  applySalonConfig(config);
+  return config;
+}
 
 function getTelegramWebApp() {
   return window.Telegram?.WebApp || null;
@@ -171,12 +336,15 @@ async function apiPost(path, payload) {
       body: JSON.stringify(payload),
     });
   } catch (error) {
+    setServerAvailability(false);
     const networkError = new Error(
       "Не вдалося зв’язатися із сервером запису. Спробуйте ще раз за кілька секунд."
     );
     networkError.cause = error;
     throw networkError;
   }
+
+  setServerAvailability(true);
 
   let responseData = {};
 
@@ -262,9 +430,26 @@ function savePhone(phone) {
 
 function getFavorites() {
   try {
-    return JSON.parse(
+    const saved = JSON.parse(
       localStorage.getItem("beautyStudioFavorites") || "[]"
     );
+
+    if (!Array.isArray(saved)) return [];
+
+    const migrated = saved.map(key => {
+      if (masters[key]) return key;
+
+      const match = Object.entries(masters).find(
+        ([, master]) => master.legacyKey === key
+      );
+      return match?.[0] || key;
+    }).filter(key => masters[key]);
+
+    if (JSON.stringify(migrated) !== JSON.stringify(saved)) {
+      saveFavorites(migrated);
+    }
+
+    return migrated;
   } catch {
     return [];
   }
@@ -310,7 +495,9 @@ function renderAvatar(element, user) {
     element.innerHTML = `<img src="${user.photo}" alt="${user.name}">`;
   } else {
     element.textContent =
-      user.name.trim().charAt(0).toUpperCase() || "B";
+      user.name.trim().charAt(0).toUpperCase() ||
+      SALON_NAME.trim().charAt(0).toUpperCase() ||
+      "S";
   }
 }
 
@@ -890,11 +1077,35 @@ function openMasterProfile(key) {
   showScreen("master-profile-screen");
 }
 
-document.querySelectorAll(".profile-open").forEach(button => {
-  button.addEventListener("click", () => {
-    openMasterProfile(button.dataset.masterKey);
+function bindCatalogButtons() {
+  document.querySelectorAll(".profile-open").forEach(button => {
+    button.addEventListener("click", () => {
+      openMasterProfile(button.dataset.masterKey);
+    });
   });
-});
+
+  document.querySelectorAll(".service-card").forEach(button => {
+    button.addEventListener("click", () => {
+      booking.service = button.dataset.service;
+      booking.price = button.dataset.price;
+      booking.duration = button.dataset.duration;
+      booking.date = "";
+      booking.time = "";
+
+      if (!booking.master) {
+        filterMastersForService(booking.service);
+        showScreen("masters-screen");
+        return;
+      }
+
+      document.querySelector("#date-summary").innerHTML =
+        `<strong>${booking.master}</strong><br>` +
+        `${booking.service} · ${booking.price} · ${booking.duration}`;
+      renderCalendar();
+      showScreen("date-screen");
+    });
+  });
+}
 
 document.querySelector("#profile-like").addEventListener("click", event => {
   if (!activeMasterKey) return;
@@ -943,28 +1154,6 @@ document.querySelector("#profile-book-button").addEventListener("click", () => {
   booking.duration = "";
   updateServiceAvailability(activeMasterKey);
   showScreen("services-screen");
-});
-
-document.querySelectorAll(".service-card").forEach(button => {
-  button.addEventListener("click", () => {
-    booking.service = button.dataset.service;
-    booking.price = button.dataset.price;
-    booking.duration = button.dataset.duration;
-    booking.date = "";
-    booking.time = "";
-
-    if (!booking.master) {
-      filterMastersForService(booking.service);
-      showScreen("masters-screen");
-      return;
-    }
-
-    document.querySelector("#date-summary").innerHTML =
-      `<strong>${booking.master}</strong><br>` +
-      `${booking.service} · ${booking.price} · ${booking.duration}`;
-    renderCalendar();
-    showScreen("date-screen");
-  });
 });
 
 const monthNames = [
@@ -1756,7 +1945,7 @@ document.querySelector("#notifications-button").addEventListener(
   "click",
   () => {
     showAppAlert(
-      "Підтвердження та зміни запису вже приходять у Telegram. Автоматичні нагадування перед візитом додамо окремим етапом."
+      "Підтвердження, зміни запису та автоматичні нагадування перед візитом приходять у Telegram."
     );
   }
 );
@@ -1802,7 +1991,7 @@ document.querySelector("#save-contact-button")?.addEventListener(
       tg?.HapticFeedback?.notificationOccurred("success");
 
       const message =
-        "Контакт Beauty Studio надіслано в чат з ботом. " +
+        `Контакт ${SALON_NAME} надіслано в чат з ботом. ` +
         "Натисніть на картку контакту, щоб додати її в телефон.";
 
       if (tg?.showAlert) {
@@ -1894,33 +2083,70 @@ document.querySelector("#telegram-phone-button")?.addEventListener(
   }
 );
 
-
-
-renderClientProfile();
-renderFavorites();
-
-const telegramWebApp = getTelegramWebApp();
-
-if (telegramWebApp) {
-  telegramWebApp.ready();
-  telegramWebApp.expand();
-  telegramWebApp.disableVerticalSwipes?.();
-
+async function bootstrapApp() {
   try {
-    telegramWebApp.setHeaderColor?.("#f8f5f6");
-    telegramWebApp.setBackgroundColor?.("#f8f5f6");
-  } catch {
-    // Старі версії Telegram можуть не підтримувати ці методи.
+    await loadSalonConfig();
+  } catch (error) {
+    console.error("Salon config error:", error);
+    showConfigFailure(
+      error.message ||
+      "Перевірте файл salon_config.json і спробуйте ще раз."
+    );
+    return;
   }
 
-  document.body.style.backgroundColor = "#f8f5f6";
-  syncClientBookings();
+  const startup = document.querySelector("#app-startup");
+  if (startup) startup.hidden = true;
+  document.body.classList.remove("config-loading");
+
+  renderClientProfile();
+  renderFavorites();
+
+  const telegramWebApp = getTelegramWebApp();
+
+  if (telegramWebApp) {
+    telegramWebApp.ready();
+    telegramWebApp.expand();
+    telegramWebApp.disableVerticalSwipes?.();
+
+    try {
+      const pageColor = salonConfig?.theme?.page || "#f8f5f6";
+      telegramWebApp.setHeaderColor?.(pageColor);
+      telegramWebApp.setBackgroundColor?.(pageColor);
+    } catch {
+      // Старі версії Telegram можуть не підтримувати ці методи.
+    }
+
+    document.body.style.backgroundColor =
+      salonConfig?.theme?.page || "#f8f5f6";
+    syncClientBookings();
+  }
+
+  checkApiHealth();
 }
 
+document.querySelector("#app-startup-retry")?.addEventListener(
+  "click",
+  () => window.location.reload()
+);
+
+document.querySelector("#server-status-retry")?.addEventListener(
+  "click",
+  () => checkApiHealth()
+);
+
 window.addEventListener("focus", () => {
-  syncClientBookings();
+  if (salonConfig) {
+    checkApiHealth();
+    syncClientBookings();
+  }
 });
 
 document.addEventListener("visibilitychange", () => {
-  if (!document.hidden) syncClientBookings();
+  if (!document.hidden && salonConfig) {
+    checkApiHealth();
+    syncClientBookings();
+  }
 });
+
+bootstrapApp();
