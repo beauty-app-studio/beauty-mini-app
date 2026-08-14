@@ -1,4 +1,4 @@
-const APP_VERSION = "7.30.0";
+const APP_VERSION = "7.32.0";
 const CONFIG_URL = `salon_config.json?v=${APP_VERSION}`;
 
 let salonConfig = null;
@@ -278,6 +278,10 @@ function apiErrorMessage(status, responseData) {
     );
   }
 
+  if (status === 429) {
+    return "Забагато дій поспіль. Зачекайте хвилину та спробуйте ще раз.";
+  }
+
   if (status === 404) {
     return "Запис не знайдено або він уже недоступний.";
   }
@@ -326,6 +330,8 @@ function apiErrorMessage(status, responseData) {
 
 async function apiPost(path, payload) {
   let response;
+  const controller = new AbortController();
+  const timeoutId = window.setTimeout(() => controller.abort(), 15000);
 
   try {
     response = await fetch(`${API_BASE_URL}${path}`, {
@@ -334,14 +340,19 @@ async function apiPost(path, payload) {
         "Content-Type": "application/json",
       },
       body: JSON.stringify(payload),
+      signal: controller.signal,
     });
   } catch (error) {
     setServerAvailability(false);
     const networkError = new Error(
-      "Не вдалося зв’язатися із сервером запису. Спробуйте ще раз за кілька секунд."
+      error?.name === "AbortError"
+        ? "Сервер відповідає надто довго. Спробуйте ще раз за кілька секунд."
+        : "Не вдалося зв’язатися із сервером запису. Спробуйте ще раз за кілька секунд."
     );
     networkError.cause = error;
     throw networkError;
+  } finally {
+    window.clearTimeout(timeoutId);
   }
 
   setServerAvailability(true);
@@ -491,8 +502,14 @@ function greetingByTime(name) {
 function renderAvatar(element, user) {
   if (!element) return;
 
+  element.replaceChildren();
+
   if (user.photo) {
-    element.innerHTML = `<img src="${user.photo}" alt="${user.name}">`;
+    const image = document.createElement("img");
+    image.src = user.photo;
+    image.alt = user.name || "Аватар користувача";
+    image.referrerPolicy = "no-referrer";
+    element.append(image);
   } else {
     element.textContent =
       user.name.trim().charAt(0).toUpperCase() ||
@@ -508,6 +525,12 @@ function statusLabel(status) {
     completed: "Завершено",
     cancelled: "Скасовано",
   }[status] || "Статус уточнюється";
+}
+
+function safeBookingStatus(status) {
+  return ["new", "confirmed", "completed", "cancelled"].includes(status)
+    ? status
+    : "new";
 }
 
 function formatIsoDate(isoDate) {
@@ -579,21 +602,21 @@ function renderClientProfile() {
       const isSelected =
         savedBooking &&
         String(savedBooking.bookingId) === String(item.bookingId);
-      const itemStatus = item.status || "new";
+      const itemStatus = safeBookingStatus(item.status);
 
       return `
         <button
           type="button"
           class="client-booking-list-item${isSelected ? " selected" : ""}"
-          data-profile-booking-id="${item.bookingId}"
+          data-profile-booking-id="${escapeHtml(item.bookingId)}"
         >
           <span class="client-booking-list-main">
-            <strong>${item.service}</strong>
-            <small>${item.date} · ${item.time}</small>
-            <small>${item.master}</small>
+            <strong>${escapeHtml(item.service)}</strong>
+            <small>${escapeHtml(item.date)} · ${escapeHtml(item.time)}</small>
+            <small>${escapeHtml(item.master)}</small>
           </span>
           <span class="client-booking-list-status status-${itemStatus}">
-            ${statusLabel(itemStatus)}
+            ${escapeHtml(statusLabel(itemStatus))}
           </span>
         </button>`;
     }).join("");
@@ -613,39 +636,39 @@ function renderClientProfile() {
 
   if (selectedLabel) selectedLabel.style.display = "block";
 
-  const status = savedBooking.status || "new";
+  const status = safeBookingStatus(savedBooking.status);
   const savedVisitMode =
     savedBooking.visitMode || savedBooking.visit_mode || "standard";
   const visitPreference =
     savedVisitMode !== "standard"
-      ? `<div class="booking-preference-note">🌿 ${visitModeLabel(savedVisitMode)}</div>`
+      ? `<div class="booking-preference-note">🌿 ${escapeHtml(visitModeLabel(savedVisitMode))}</div>`
       : "";
 
   card.innerHTML = `
     <div class="booking-ticket-top">
-      <span>Заявка №${savedBooking.bookingId || "—"}</span>
-      <span class="status-pill status-${status}">${statusLabel(status)}</span>
+      <span>Заявка №${escapeHtml(savedBooking.bookingId || "—")}</span>
+      <span class="status-pill status-${status}">${escapeHtml(statusLabel(status))}</span>
     </div>
     <div class="booking-ticket-service">
-      <h3>${savedBooking.service}</h3>
-      <p>${savedBooking.master}</p>
+      <h3>${escapeHtml(savedBooking.service)}</h3>
+      <p>${escapeHtml(savedBooking.master)}</p>
     </div>
     <div class="booking-ticket-details">
       <div>
         <small>Дата</small>
-        <strong>${savedBooking.date}</strong>
+        <strong>${escapeHtml(savedBooking.date)}</strong>
       </div>
       <div>
         <small>Час</small>
-        <strong>${savedBooking.time}</strong>
+        <strong>${escapeHtml(savedBooking.time)}</strong>
       </div>
       <div>
         <small>Тривалість</small>
-        <strong>${savedBooking.duration}</strong>
+        <strong>${escapeHtml(savedBooking.duration)}</strong>
       </div>
       <div>
         <small>Вартість</small>
-        <strong>${savedBooking.price}</strong>
+        <strong>${escapeHtml(savedBooking.price)}</strong>
       </div>
     </div>
     ${visitPreference}`;
@@ -760,11 +783,11 @@ function renderFavorites() {
   container.innerHTML = favoriteKeys.map(key => {
     const master = masters[key];
     return `
-      <button class="favorite-card" data-favorite-master="${key}">
-        <img src="${master.photo}" alt="${master.name}">
+      <button class="favorite-card" data-favorite-master="${escapeHtml(key)}">
+        <img src="${escapeHtml(master.photo)}" alt="${escapeHtml(master.name)}">
         <span>
-          <strong>${master.name}</strong>
-          <small>${master.specialty}</small>
+          <strong>${escapeHtml(master.name)}</strong>
+          <small>${escapeHtml(master.specialty)}</small>
         </span>
         <b>›</b>
       </button>`;
@@ -1067,9 +1090,16 @@ function openMasterProfile(key) {
   document.querySelector("#profile-clients").textContent = master.clients;
   document.querySelector("#profile-about").textContent = master.about;
   document.querySelector("#profile-review").textContent = master.review;
-  document.querySelector("#profile-portfolio").innerHTML = master.portfolio
-    .map(src => `<img src="${src}" alt="Робота майстра">`)
-    .join("");
+  const portfolio = document.querySelector("#profile-portfolio");
+  portfolio.replaceChildren(
+    ...master.portfolio.map(src => {
+      const image = document.createElement("img");
+      image.src = src;
+      image.alt = "Робота майстра";
+      image.loading = "lazy";
+      return image;
+    })
+  );
 
   document.querySelector("#profile-like").textContent =
     getFavorites().includes(key) ? "♥" : "♡";
@@ -1099,8 +1129,8 @@ function bindCatalogButtons() {
       }
 
       document.querySelector("#date-summary").innerHTML =
-        `<strong>${booking.master}</strong><br>` +
-        `${booking.service} · ${booking.price} · ${booking.duration}`;
+        `<strong>${escapeHtml(booking.master)}</strong><br>` +
+        `${escapeHtml(booking.service)} · ${escapeHtml(booking.price)} · ${escapeHtml(booking.duration)}`;
       renderCalendar();
       showScreen("date-screen");
     });
@@ -1142,8 +1172,8 @@ document.querySelector("#profile-book-button").addEventListener("click", () => {
     master.services.includes(booking.service)
   ) {
     document.querySelector("#date-summary").innerHTML =
-      `<strong>${booking.master}</strong><br>` +
-      `${booking.service} · ${booking.price} · ${booking.duration}`;
+      `<strong>${escapeHtml(booking.master)}</strong><br>` +
+      `${escapeHtml(booking.service)} · ${escapeHtml(booking.price)} · ${escapeHtml(booking.duration)}`;
     renderCalendar();
     showScreen("date-screen");
     return;
@@ -1268,8 +1298,8 @@ async function renderTimes() {
   booking.time = "";
 
   summary.innerHTML =
-    `<strong>${booking.date}</strong><br>` +
-    `${booking.master}<br>${booking.service}`;
+    `<strong>${escapeHtml(booking.date)}</strong><br>` +
+    `${escapeHtml(booking.master)}<br>${escapeHtml(booking.service)}`;
   grid.innerHTML = "";
   status.className = "time-status loading";
   status.textContent = "Перевіряємо вільний час…";
@@ -1320,8 +1350,8 @@ async function renderTimes() {
         ? "time-button available"
         : "time-button busy";
       button.innerHTML = isAvailable
-        ? `<strong>${time}</strong><small>Вільно</small>`
-        : `<strong>${time}</strong><small>Зайнято</small>`;
+        ? `<strong>${escapeHtml(time)}</strong><small>Вільно</small>`
+        : `<strong>${escapeHtml(time)}</strong><small>Зайнято</small>`;
 
       if (!isAvailable) {
         button.disabled = true;
@@ -1380,20 +1410,20 @@ function renderSummary() {
   const submitButton = document.querySelector("#booking-submit-button");
   const visitModeRow =
     booking.visitMode !== "standard"
-      ? `<div class="review-detail-row visit-mode-summary"><span>🌿 Комфорт</span><strong>${visitModeLabel(booking.visitMode)}</strong></div>`
+      ? `<div class="review-detail-row visit-mode-summary"><span>🌿 Комфорт</span><strong>${escapeHtml(visitModeLabel(booking.visitMode))}</strong></div>`
       : "";
 
   if (summary) {
     summary.innerHTML =
       `<div class="review-main-row">` +
         `<div class="review-service-icon">✦</div>` +
-        `<div><small>Послуга</small><strong>${booking.service}</strong></div>` +
-        `<strong class="review-price">${booking.price}</strong>` +
+        `<div><small>Послуга</small><strong>${escapeHtml(booking.service)}</strong></div>` +
+        `<strong class="review-price">${escapeHtml(booking.price)}</strong>` +
       `</div>` +
-      `<div class="review-detail-row"><span>👩‍🎨 Майстер</span><strong>${booking.master}</strong></div>` +
-      `<div class="review-detail-row"><span>📅 Дата</span><strong>${booking.date}</strong></div>` +
-      `<div class="review-detail-row"><span>🕒 Час</span><strong>${booking.time}</strong></div>` +
-      `<div class="review-detail-row"><span>⏳ Тривалість</span><strong>${booking.duration}</strong></div>` +
+      `<div class="review-detail-row"><span>👩‍🎨 Майстер</span><strong>${escapeHtml(booking.master)}</strong></div>` +
+      `<div class="review-detail-row"><span>📅 Дата</span><strong>${escapeHtml(booking.date)}</strong></div>` +
+      `<div class="review-detail-row"><span>🕒 Час</span><strong>${escapeHtml(booking.time)}</strong></div>` +
+      `<div class="review-detail-row"><span>⏳ Тривалість</span><strong>${escapeHtml(booking.duration)}</strong></div>` +
       visitModeRow;
   }
 
@@ -1513,15 +1543,15 @@ document.querySelector("#booking-form").addEventListener(
       if (successTicket) {
         successTicket.innerHTML =
           `<div class="success-ticket-top">` +
-            `<div><small>Послуга</small><strong>${booking.service}</strong></div>` +
-            `<strong class="success-ticket-price">${booking.price}</strong>` +
+            `<div><small>Послуга</small><strong>${escapeHtml(booking.service)}</strong></div>` +
+            `<strong class="success-ticket-price">${escapeHtml(booking.price)}</strong>` +
           `</div>` +
-          `<div class="success-ticket-row"><span>👩‍🎨 Майстер</span><strong>${booking.master}</strong></div>` +
-          `<div class="success-ticket-row"><span>📅 Дата</span><strong>${booking.date}</strong></div>` +
-          `<div class="success-ticket-row"><span>🕒 Час</span><strong>${booking.time}</strong></div>` +
-          `<div class="success-ticket-row"><span>⏳ Тривалість</span><strong>${booking.duration}</strong></div>` +
+          `<div class="success-ticket-row"><span>👩‍🎨 Майстер</span><strong>${escapeHtml(booking.master)}</strong></div>` +
+          `<div class="success-ticket-row"><span>📅 Дата</span><strong>${escapeHtml(booking.date)}</strong></div>` +
+          `<div class="success-ticket-row"><span>🕒 Час</span><strong>${escapeHtml(booking.time)}</strong></div>` +
+          `<div class="success-ticket-row"><span>⏳ Тривалість</span><strong>${escapeHtml(booking.duration)}</strong></div>` +
           (booking.visitMode !== "standard"
-            ? `<div class="success-ticket-row"><span>🌿 Комфорт</span><strong>${visitModeLabel(booking.visitMode)}</strong></div>`
+            ? `<div class="success-ticket-row"><span>🌿 Комфорт</span><strong>${escapeHtml(visitModeLabel(booking.visitMode))}</strong></div>`
             : "");
       }
 
@@ -1580,8 +1610,8 @@ function renderLateArrivalScreen() {
 
   if (summary && savedBooking) {
     summary.innerHTML =
-      `<strong>${savedBooking.service}</strong><br>` +
-      `${savedBooking.date} о ${savedBooking.time}`;
+      `<strong>${escapeHtml(savedBooking.service)}</strong><br>` +
+      `${escapeHtml(savedBooking.date)} о ${escapeHtml(savedBooking.time)}`;
   }
 }
 
@@ -1849,9 +1879,9 @@ document.querySelector("#reschedule-booking-button").addEventListener(
     booking.time = "";
 
     document.querySelector("#date-summary").innerHTML =
-      `<strong>Запис №${savedBooking.bookingId} · ${booking.service}</strong><br>` +
-      `${booking.master}<br>` +
-      `Було: ${savedBooking.date} о ${savedBooking.time}`;
+      `<strong>Запис №${escapeHtml(savedBooking.bookingId)} · ${escapeHtml(booking.service)}</strong><br>` +
+      `${escapeHtml(booking.master)}<br>` +
+      `Було: ${escapeHtml(savedBooking.date)} о ${escapeHtml(savedBooking.time)}`;
 
     currentMonth = new Date();
     currentMonth.setDate(1);
@@ -1892,8 +1922,8 @@ document.querySelector("#repeat-booking-button").addEventListener(
     document.querySelector("#selected-master-chip").textContent =
       `Обрано: ${booking.master}`;
     document.querySelector("#date-summary").innerHTML =
-      `<strong>${booking.master}</strong><br>` +
-      `${booking.service} · ${booking.price} · ${booking.duration}`;
+      `<strong>${escapeHtml(booking.master)}</strong><br>` +
+      `${escapeHtml(booking.service)} · ${escapeHtml(booking.price)} · ${escapeHtml(booking.duration)}`;
 
     currentMonth = new Date();
     currentMonth.setDate(1);
