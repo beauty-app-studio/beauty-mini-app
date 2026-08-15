@@ -1,4 +1,4 @@
-const APP_VERSION = "7.33.0";
+const APP_VERSION = "7.34.0";
 const CONFIG_URL = `salon_config.json?v=${APP_VERSION}`;
 
 let salonConfig = null;

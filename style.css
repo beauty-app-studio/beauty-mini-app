@@ -951,7 +951,7 @@ body{
 }
 
 
-/* v7.33 — adaptive Telegram/iPhone layout and clearer navigation */
+/* v7.34 — adaptive Telegram/iPhone layout and clearer navigation */
 :root{
   --keyboard-height:0px;
   --page-inline:clamp(14px,4.5vw,18px);
