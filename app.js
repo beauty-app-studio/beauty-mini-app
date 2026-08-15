@@ -1,4 +1,4 @@
-const APP_VERSION = "7.32.0";
+const APP_VERSION = "7.33.0";
 const CONFIG_URL = `salon_config.json?v=${APP_VERSION}`;
 
 let salonConfig = null;
@@ -169,7 +169,7 @@ function applySalonConfig(config) {
   });
 
   document.querySelectorAll('input[type="tel"]').forEach(input => {
-    input.placeholder = SALON_PHONE;
+    input.placeholder = SALON_PHONE_DISPLAY;
   });
 
   renderSalonCatalog();
@@ -246,15 +246,39 @@ function showAppAlert(message) {
 }
 
 function askConfirmation(message) {
-  const tg = getTelegramWebApp();
-
   return new Promise(resolve => {
-    if (tg?.showConfirm) {
-      tg.showConfirm(message, result => resolve(Boolean(result)));
+    const dialog = document.querySelector("#app-confirm");
+    const messageElement = document.querySelector("#app-confirm-message");
+    const acceptButton = document.querySelector("#app-confirm-accept");
+    const cancelButton = document.querySelector("#app-confirm-cancel");
+    const backdrop = dialog?.querySelector("[data-confirm-cancel]");
+
+    if (!dialog || !messageElement || !acceptButton || !cancelButton) {
+      resolve(window.confirm(message));
       return;
     }
 
-    resolve(window.confirm(message));
+    const finish = result => {
+      dialog.hidden = true;
+      acceptButton.removeEventListener("click", accept);
+      cancelButton.removeEventListener("click", cancel);
+      backdrop?.removeEventListener("click", cancel);
+      document.removeEventListener("keydown", onKeyDown);
+      resolve(result);
+    };
+    const accept = () => finish(true);
+    const cancel = () => finish(false);
+    const onKeyDown = event => {
+      if (event.key === "Escape") cancel();
+    };
+
+    messageElement.textContent = message;
+    dialog.hidden = false;
+    acceptButton.addEventListener("click", accept, { once: true });
+    cancelButton.addEventListener("click", cancel, { once: true });
+    backdrop?.addEventListener("click", cancel, { once: true });
+    document.addEventListener("keydown", onKeyDown);
+    requestAnimationFrame(() => acceptButton.focus());
   });
 }
 
@@ -266,6 +290,99 @@ function openExternal(url) {
   } else {
     window.open(url, "_blank", "noopener,noreferrer");
   }
+}
+
+function formatPhoneInput(value) {
+  let digits = String(value || "").replace(/\D/g, "");
+
+  if (digits.startsWith("0")) {
+    digits = `38${digits}`;
+  }
+
+  if (digits.startsWith("380")) {
+    digits = digits.slice(0, 12);
+    const operator = digits.slice(3, 5);
+    const first = digits.slice(5, 8);
+    const second = digits.slice(8, 10);
+    const third = digits.slice(10, 12);
+
+    return ["+380", operator, first, second, third]
+      .filter(Boolean)
+      .join(" ");
+  }
+
+  digits = digits.slice(0, 15);
+  return `${String(value || "").trim().startsWith("+") ? "+" : ""}${digits}`;
+}
+
+function bindPhoneFormatter(selector) {
+  const input = document.querySelector(selector);
+  if (!input) return;
+
+  input.addEventListener("input", () => {
+    input.value = formatPhoneInput(input.value);
+  });
+}
+
+function scrollFocusedFieldIntoView(field) {
+  if (!field) return;
+
+  [60, 220, 440].forEach(delay => {
+    setTimeout(() => {
+      if (document.activeElement !== field) return;
+      field.scrollIntoView({
+        behavior: "auto",
+        block: "center",
+        inline: "nearest",
+      });
+    }, delay);
+  });
+}
+
+function updateKeyboardLayout() {
+  const viewport = window.visualViewport;
+  const field = document.activeElement;
+  const isEditable = Boolean(
+    field?.matches?.("input, textarea, [contenteditable='true']")
+  );
+  const keyboardHeight = viewport
+    ? Math.max(0, window.innerHeight - viewport.height - viewport.offsetTop)
+    : 0;
+
+  document.documentElement.style.setProperty(
+    "--keyboard-height",
+    `${Math.round(keyboardHeight)}px`
+  );
+  document.body.classList.toggle("keyboard-open", isEditable);
+
+  if (isEditable) {
+    scrollFocusedFieldIntoView(field);
+  }
+}
+
+function setupAdaptiveInputViewport() {
+  bindPhoneFormatter("#client-phone");
+  bindPhoneFormatter("#callback-phone");
+
+  document.addEventListener("focusin", event => {
+    if (!event.target.matches("input, textarea, [contenteditable='true']")) return;
+    document.body.classList.add("keyboard-open");
+    updateKeyboardLayout();
+    scrollFocusedFieldIntoView(event.target);
+  });
+
+  document.addEventListener("focusout", () => {
+    setTimeout(() => {
+      const field = document.activeElement;
+      if (!field?.matches?.("input, textarea, [contenteditable='true']")) {
+        document.body.classList.remove("keyboard-open");
+        document.documentElement.style.setProperty("--keyboard-height", "0px");
+      }
+    }, 120);
+  });
+
+  window.visualViewport?.addEventListener("resize", updateKeyboardLayout);
+  window.visualViewport?.addEventListener("scroll", updateKeyboardLayout);
 }
 
 function apiErrorMessage(status, responseData) {
@@ -932,6 +1049,7 @@ function resetBookingFlow() {
 
 function setProfileSetupMode(mode = "first") {
   const isEdit = mode === "edit";
+  document.querySelector("#profile-setup-screen").dataset.mode = mode;
 
   const eyebrow = document.querySelector("#profile-setup-eyebrow");
   const title = document.querySelector("#profile-setup-title");
@@ -1013,6 +1131,13 @@ function showScreen(id, add = true) {
     }
   }
 
+  const canGoBack = historyStack.length > 1;
+  targetScreen.querySelectorAll("[data-back]").forEach(button => {
+    button.hidden = !canGoBack;
+    button.disabled = !canGoBack;
+    button.setAttribute("aria-hidden", String(!canGoBack));
+  });
+
   navItems.forEach(item => {
     item.classList.toggle("active-nav", item.dataset.open === id);
   });
@@ -1043,7 +1168,12 @@ document.querySelectorAll("[data-open]").forEach(button => {
     ) {
       setProfileSetupMode("first");
       document.querySelector("#profile-name-input").value = "";
-      showScreen("profile-setup-screen");
+      if (isRootNavigation) {
+        historyStack.splice(0, historyStack.length, "profile-setup-screen");
+        showScreen("profile-setup-screen", false);
+      } else {
+        showScreen("profile-setup-screen");
+      }
       return;
     }
 
@@ -1072,7 +1202,8 @@ document.querySelectorAll("[data-open]").forEach(button => {
 
 document.querySelectorAll("[data-back]").forEach(button => {
   button.addEventListener("click", () => {
-    if (historyStack.length > 1) historyStack.pop();
+    if (historyStack.length <= 1) return;
+    historyStack.pop();
     showScreen(historyStack.at(-1), false);
   });
 });
@@ -1103,6 +1234,12 @@ function openMasterProfile(key) {
 
   document.querySelector("#profile-like").textContent =
     getFavorites().includes(key) ? "♥" : "♡";
+  document.querySelector("#profile-like").setAttribute(
+    "aria-label",
+    getFavorites().includes(key)
+      ? "Видалити майстра з улюблених"
+      : "Додати майстра в улюблені"
+  );
 
   showScreen("master-profile-screen");
 }
@@ -1146,9 +1283,11 @@ document.querySelector("#profile-like").addEventListener("click", event => {
   if (index === -1) {
     favorites.push(activeMasterKey);
     event.currentTarget.textContent = "♥";
+    event.currentTarget.setAttribute("aria-label", "Видалити майстра з улюблених");
   } else {
     favorites.splice(index, 1);
     event.currentTarget.textContent = "♡";
+    event.currentTarget.setAttribute("aria-label", "Додати майстра в улюблені");
   }
 
   saveFavorites(favorites);
@@ -1435,9 +1574,15 @@ function renderSummary() {
 
   const profileName = getSavedProfileName();
   const nameInput = document.querySelector("#client-name");
+  const phoneInput = document.querySelector("#client-phone");
+  const savedPhone = getSavedPhone();
 
   if (profileName && !nameInput.value.trim()) {
     nameInput.value = profileName;
+  }
+
+  if (savedPhone && !phoneInput.value.trim()) {
+    phoneInput.value = formatPhoneInput(savedPhone);
   }
 }
 
@@ -1947,7 +2092,12 @@ document.querySelector("#profile-setup-form").addEventListener(
 
     saveProfileName(name);
     renderClientProfile();
-    showScreen("client-profile-screen");
+    if (document.querySelector("#profile-setup-screen").dataset.mode === "first") {
+      historyStack.splice(0, historyStack.length, "client-profile-screen");
+      showScreen("client-profile-screen", false);
+    } else {
+      showScreen("client-profile-screen");
+    }
   }
 );
 
@@ -1961,28 +2111,9 @@ document.querySelector("#edit-profile-name").addEventListener(
   }
 );
 
-document.querySelector("#home-favorites-button").addEventListener(
-  "click",
-  () => showScreen("favorites-screen")
-);
-
 document.querySelector("#favorite-masters-button").addEventListener(
   "click",
   () => showScreen("favorites-screen")
-);
-
-document.querySelector("#notifications-button").addEventListener(
-  "click",
-  () => {
-    showAppAlert(
-      "Підтвердження, зміни запису та автоматичні нагадування перед візитом приходять у Telegram."
-    );
-  }
-);
-
-document.querySelector("#address-button").addEventListener(
-  "click",
-  () => openExternal(SALON_MAP_URL)
 );
 
 function prefillCallbackPhone() {
@@ -1993,9 +2124,33 @@ function prefillCallbackPhone() {
   const phone = getSavedPhone() || savedBooking?.phone || "";
 
   if (phone) {
-    input.value = phone;
+    input.value = formatPhoneInput(phone);
   }
 }
+
+document.querySelector("#call-salon-button")?.addEventListener(
+  "click",
+  async () => {
+    const confirmed = await askConfirmation(
+      `Зателефонувати до ${SALON_NAME} за номером ${SALON_PHONE_DISPLAY}?`
+    );
+    if (!confirmed) return;
+
+    window.location.href = `tel:${SALON_PHONE}`;
+  }
+);
+
+document.querySelector("#open-map-button")?.addEventListener(
+  "click",
+  async () => {
+    const confirmed = await askConfirmation(
+      `Відкрити адресу «${SALON_ADDRESS}» на карті?`
+    );
+    if (!confirmed) return;
+
+    openExternal(SALON_MAP_URL);
+  }
+);
 
 document.querySelector("#save-contact-button")?.addEventListener(
   "click",
@@ -2082,37 +2237,6 @@ document.querySelector("#request-callback-button")?.addEventListener(
   }
 );
 
-document.querySelector("#telegram-phone-button")?.addEventListener(
-  "click",
-  event => {
-    const tg = getTelegramWebApp();
-
-    if (!tg?.requestContact) {
-      showAppAlert("Ця версія Telegram не підтримує передачу номера акаунта.");
-      return;
-    }
-
-    const button = event.currentTarget;
-    const oldText = button.textContent;
-    button.disabled = true;
-    button.textContent = "Очікуємо підтвердження…";
-
-    tg.requestContact(shared => {
-      button.disabled = false;
-      button.textContent = oldText;
-
-      if (shared) {
-        tg.HapticFeedback?.notificationOccurred("success");
-        showAppAlert(
-          "Готово. Telegram-номер передано салону."
-        );
-      } else {
-        tg.HapticFeedback?.notificationOccurred("warning");
-      }
-    });
-  }
-);
-
 async function bootstrapApp() {
   try {
     await loadSalonConfig();
@@ -2179,4 +2303,5 @@ document.addEventListener("visibilitychange", () => {
   }
 });
 
+setupAdaptiveInputViewport();
 bootstrapApp();

@@ -7,7 +7,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700&family=Playfair+Display:wght@600;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="style.css?v=7.32.0">
+  <link rel="stylesheet" href="style.css?v=7.33.0">
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
   <script>
     (function () {
@@ -54,11 +54,7 @@
 
     <section class="screen active" id="home-screen">
       <header class="topbar">
-        <div>
-          <p class="eyebrow">Telegram Mini App</p>
-          <h1 data-salon-name>Салон краси</h1>
-        </div>
-        <button class="icon-button" id="home-favorites-button" aria-label="Улюблені майстри">♡</button>
+        <h1 data-salon-name>Салон краси</h1>
       </header>
 
       <section class="welcome-strip">
@@ -80,22 +76,11 @@
 
       <button class="primary-button" data-open="masters-screen">Записатися</button>
 
-      <section class="quick-grid">
-        <button class="quick-card" data-open="masters-screen">
-          <span class="quick-icon">👩‍🎨</span>
-          <span><strong>Наші майстри</strong><small>Профілі та спеціалізація</small></span>
-        </button>
-        <button class="quick-card" data-open="services-screen">
-          <span class="quick-icon">💅</span>
-          <span><strong>Послуги</strong><small>Ціни й тривалість</small></span>
-        </button>
-        <button class="quick-card" id="address-button">
-          <span class="quick-icon">📍</span>
-          <span><strong>Адреса</strong><small data-salon-address>Адреса салону</small></span>
-        </button>
-        <button class="quick-card" data-open="contacts-screen" type="button">
+      <section class="quick-grid quick-grid-single">
+        <button class="quick-card quick-card-wide" data-open="contacts-screen" type="button">
           <span class="quick-icon">☎️</span>
-          <span><strong>Контакти</strong><small data-salon-phone>Телефон салону</small></span>
+          <span><strong>Контакти й адреса</strong><small>Телефон, маршрут і графік роботи</small></span>
+          <b aria-hidden="true">›</b>
         </button>
       </section>
     </section>
@@ -116,8 +101,10 @@
 
     <section class="screen" id="master-profile-screen">
       <header class="profile-header">
-        <button class="floating-back" data-back>←</button>
-        <button class="floating-like" id="profile-like">♡</button>
+        <div class="profile-header-actions">
+          <button class="floating-back" data-back type="button" aria-label="Повернутися назад">←</button>
+          <button class="floating-like" id="profile-like" type="button" aria-label="Додати майстра в улюблені">♡</button>
+        </div>
         <img id="profile-photo" src="" alt="Фото майстра">
         <div class="profile-gradient"></div>
         <div class="profile-name-block">
@@ -271,12 +258,13 @@
 
         <label>
           <span>Ім’я або ім’я та прізвище</span>
-          <input id="client-name" type="text" placeholder="Наприклад: Марія Коваль" autocomplete="name" required>
+          <input id="client-name" type="text" placeholder="Наприклад: Марія Коваль" autocomplete="name" autocapitalize="words" enterkeyhint="next" required>
         </label>
 
         <label>
           <span>Номер телефону</span>
-          <input id="client-phone" type="tel" inputmode="tel" autocomplete="tel" placeholder="Номер телефону" required>
+          <input id="client-phone" type="tel" inputmode="tel" autocomplete="tel" enterkeyhint="done" maxlength="17" placeholder="+380 67 123 45 67" required>
+          <small class="field-hint">Формат: +380 XX XXX XX XX</small>
         </label>
 
         <div class="booking-confirm-note">
@@ -332,6 +320,8 @@
               maxlength="40"
               placeholder="Наприклад: Марія"
               autocomplete="name"
+              autocapitalize="words"
+              enterkeyhint="done"
               required
             >
           </label>
@@ -370,11 +360,6 @@
       </section>
 
       <section class="profile-dashboard-grid">
-        <article class="dashboard-tile">
-          <span>🎁</span>
-          <strong id="bonus-points">0</strong>
-          <small>бонусів</small>
-        </article>
         <article class="dashboard-tile">
           <span>♡</span>
           <strong id="favorite-count">0</strong>
@@ -425,34 +410,15 @@
         </div>
       </section>
 
-      <section class="profile-section">
-        <p class="eyebrow">Переваги</p>
-        <div class="loyalty-card">
-          <div>
-            <span class="loyalty-label">Beauty Club · скоро</span>
-            <h3>Програма лояльності готується</h3>
-          </div>
-          <div class="loyalty-progress">
-            <span style="width:0"></span>
-          </div>
-          <small>Тут з’являться реальні бонуси після підключення програми лояльності.</small>
-        </div>
-      </section>
-
       <section class="settings-list">
         <button id="favorite-masters-button">
           <span>♡</span>
           <div><strong>Улюблені майстри</strong><small>Ваш особистий список</small></div>
           <b>›</b>
         </button>
-        <button id="notifications-button">
-          <span>🔔</span>
-          <div><strong>Сповіщення</strong><small>Нагадування про записи</small></div>
-          <b>›</b>
-        </button>
         <button data-open="contacts-screen">
           <span>☎</span>
-          <div><strong>Підтримка салону</strong><small>Контакти адміністратора</small></div>
+          <div><strong>Контакти й адреса</strong><small>Телефон, маршрут і графік</small></div>
           <b>›</b>
         </button>
       </section>
@@ -504,7 +470,7 @@
         <button class="back-button" data-back>←</button>
         <div>
           <p class="eyebrow" data-salon-name>Салон краси</p>
-          <h2>Контакти</h2>
+          <h2>Контакти й адреса</h2>
         </div>
       </header>
 
@@ -512,28 +478,25 @@
         <div class="contacts-page-icon">☎️</div>
         <p class="eyebrow">Адміністратор салону</p>
         <h3>Зв’яжіться з нами</h3>
-        <p>Оберіть найзручніший спосіб.</p>
+        <p>Оберіть найзручніший спосіб зв’язку або побудуйте маршрут.</p>
 
         <div class="contact-number-card contact-number-static">
           <span>Телефон салону</span>
           <strong data-salon-phone>Телефон салону</strong>
         </div>
 
+        <button class="primary-button contact-action-button" id="call-salon-button" type="button">
+          📞 Зателефонувати
+        </button>
+
         <label class="contact-phone-field">
           <span>На який номер вам передзвонити?</span>
-          <input id="callback-phone" type="tel" inputmode="tel" autocomplete="tel" placeholder="Номер телефону">
+          <input id="callback-phone" type="tel" inputmode="tel" autocomplete="tel" enterkeyhint="done" maxlength="17" placeholder="+380 67 123 45 67">
+          <small class="field-hint">Формат: +380 XX XXX XX XX</small>
         </label>
 
         <button class="primary-button contact-action-button" id="request-callback-button" type="button">
           📞 Попросити передзвонити
-        </button>
-
-        <button class="secondary-button contact-action-button" id="telegram-phone-button" type="button">
-          Telegram-номер
-        </button>
-
-        <button class="secondary-button contact-action-button" id="save-contact-button" type="button">
-          👤 Зберегти контакт
         </button>
 
         <div class="contact-info-card">
@@ -544,6 +507,10 @@
           </div>
         </div>
 
+        <button class="secondary-button contact-action-button" id="open-map-button" type="button">
+          📍 Відкрити на карті
+        </button>
+
         <div class="contact-info-card">
           <span>🕒</span>
           <div>
@@ -551,6 +518,10 @@
             <small data-salon-work-time>Уточнюємо графік</small>
           </div>
         </div>
+
+        <button class="secondary-button contact-action-button" id="save-contact-button" type="button">
+          👤 Зберегти контакт
+        </button>
 
         <button class="secondary-button" data-back>Назад</button>
       </section>
@@ -596,6 +567,19 @@
     </nav>
   </main>
 
-  <script src="app.js?v=7.32.0"></script>
+  <div class="app-confirm" id="app-confirm" role="dialog" aria-modal="true" aria-labelledby="app-confirm-title" hidden>
+    <div class="app-confirm-backdrop" data-confirm-cancel></div>
+    <section class="app-confirm-card">
+      <div class="app-confirm-icon">?</div>
+      <h2 id="app-confirm-title">Підтвердьте дію</h2>
+      <p id="app-confirm-message"></p>
+      <div class="app-confirm-actions">
+        <button class="secondary-button" id="app-confirm-cancel" type="button">Скасувати</button>
+        <button class="primary-button" id="app-confirm-accept" type="button">Підтвердити</button>
+      </div>
+    </section>
+  </div>
+
+  <script src="app.js?v=7.33.0"></script>
 </body>
 </html>
