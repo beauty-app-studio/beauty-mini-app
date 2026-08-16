@@ -1,5 +1,7 @@
-const APP_VERSION = "7.35.0";
+const APP_VERSION = "7.35.1";
 const CONFIG_URL = `salon_config.json?v=${APP_VERSION}`;
+const TELEGRAM_INIT_DATA_SESSION_KEY =
+  "beauty_studio.telegram_init_data";
 
 let salonConfig = null;
 let API_BASE_URL = "";
@@ -235,8 +237,82 @@ function getTelegramWebApp() {
   return window.Telegram?.WebApp || null;
 }
 
+function getInitDataFromLaunchUrl() {
+  const sources = [
+    window.location.hash.replace(/^#/, ""),
+    window.location.search.replace(/^\?/, ""),
+  ];
+
+  for (const source of sources) {
+    if (!source) continue;
+
+    try {
+      const initData = new URLSearchParams(source).get("tgWebAppData");
+      if (initData) return initData.trim();
+    } catch {
+      // Пошкоджений URL не повинен блокувати запуск Mini App.
+    }
+  }
+
+  return "";
+}
+
+function getCachedInitData() {
+  try {
+    return window.sessionStorage.getItem(
+      TELEGRAM_INIT_DATA_SESSION_KEY
+    ) || "";
+  } catch {
+    return "";
+  }
+}
+
+function cacheInitData(initData) {
+  if (!initData) return "";
+
+  try {
+    window.sessionStorage.setItem(
+      TELEGRAM_INIT_DATA_SESSION_KEY,
+      initData
+    );
+  } catch {
+    // На окремих пристроях sessionStorage може бути недоступним.
+  }
+
+  return initData;
+}
+
 function getInitData() {
-  return getTelegramWebApp()?.initData || "";
+  const sdkInitData = String(
+    getTelegramWebApp()?.initData || ""
+  ).trim();
+  const earlyLaunchInitData = String(
+    window.__BEAUTY_TELEGRAM_INIT_DATA__ || ""
+  ).trim();
+  const launchInitData = getInitDataFromLaunchUrl();
+  const cachedInitData = getCachedInitData();
+
+  return cacheInitData(
+    sdkInitData ||
+    earlyLaunchInitData ||
+    launchInitData ||
+    cachedInitData
+  );
+}
+
+async function waitForInitData(timeoutMs = 1200) {
+  const telegramWebApp = getTelegramWebApp();
+  telegramWebApp?.ready?.();
+
+  const deadline = Date.now() + timeoutMs;
+  let initData = getInitData();
+
+  while (!initData && Date.now() < deadline) {
+    await new Promise(resolve => window.setTimeout(resolve, 100));
+    initData = getInitData();
+  }
+
+  return initData;
 }
 
 function showAppAlert(message) {
@@ -1447,11 +1523,13 @@ async function renderTimes() {
   status.className = "time-status loading";
   status.textContent = "Перевіряємо вільний час…";
 
-  const initData = getInitData();
+  const initData = await waitForInitData();
 
   if (!initData) {
     status.className = "time-status warning";
-    status.textContent = "Вільний час можна перевірити лише всередині Telegram.";
+    status.textContent =
+      "Не вдалося відновити Telegram-сесію. Закрийте це вікно " +
+      `й відкрийте ${SALON_NAME} кнопкою в чаті ще раз.`;
     return;
   }
 

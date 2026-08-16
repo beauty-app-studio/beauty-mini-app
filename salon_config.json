@@ -1,5 +1,5 @@
 {
-  "version": "7.35.0",
+  "version": "7.35.1",
   "salon": {
     "name": "Beauty Studio",
     "tagline": "Ваш простір краси",
@@ -12,7 +12,7 @@
     "map_url": "https://www.google.com/maps/search/?api=1&query=%D0%9A%D0%B8%D1%97%D0%B2%2C%20%D0%B2%D1%83%D0%BB.%20%D0%A5%D1%80%D0%B5%D1%89%D0%B0%D1%82%D0%B8%D0%BA%2C%201"
   },
   "deployment": {
-    "mini_app_url": "https://beauty-app-studio.github.io/beauty-mini-app/?v=7.35.0",
+    "mini_app_url": "https://beauty-app-studio.github.io/beauty-mini-app/?v=7.35.1",
     "app_origin": "https://beauty-app-studio.github.io",
     "api_base_url": "https://beauty-studio-backend-production-0beb.up.railway.app"
   },
