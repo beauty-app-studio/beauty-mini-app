@@ -950,6 +950,17 @@ body{
   }
 }
 
+.time-button.nearest-time{
+  grid-column:1/-1;
+  display:grid;
+  gap:4px;
+  padding:14px 16px;
+}
+
+.time-button.nearest-time small{
+  color:var(--muted);
+}
+
 
 /* v7.34 — adaptive Telegram/iPhone layout and clearer navigation */
 :root{

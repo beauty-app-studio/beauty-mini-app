@@ -1,4 +1,4 @@
-const APP_VERSION = "7.35.1";
+const APP_VERSION = "7.36.0";
 const CONFIG_URL = `salon_config.json?v=${APP_VERSION}`;
 const TELEGRAM_INIT_DATA_SESSION_KEY =
   "beauty_studio.telegram_init_data";
@@ -12,6 +12,9 @@ let SALON_ADDRESS = "";
 let SALON_MAP_URL = "";
 let masters = {};
 let serviceCatalog = {};
+let activeMasterKeys = null;
+let activeServiceKeys = null;
+let masterDaysOff = {};
 
 function escapeHtml(value) {
   return String(value ?? "")
@@ -62,9 +65,11 @@ function buildSalonCatalog(config) {
         ...master,
         key,
         legacyKey: master.legacy_key || "",
-        services: (master.services || []).map(
-          serviceKey => config.services[serviceKey].name
-        ),
+        services: (master.services || [])
+          .filter(serviceKey => (
+            !activeServiceKeys || activeServiceKeys.has(serviceKey)
+          ))
+          .map(serviceKey => config.services[serviceKey].name),
         // У конфігурації: 1 = понеділок, 7 = неділя.
         // Date.getDay(): 0 = неділя, 1 = понеділок.
         workdays: (master.workdays || []).map(day => Number(day) % 7),
@@ -78,7 +83,9 @@ function renderSalonCatalog() {
   const serviceList = document.querySelector(".service-list");
 
   if (masterList) {
-    masterList.innerHTML = Object.entries(masters).map(([key, master]) => `
+    masterList.innerHTML = Object.entries(masters)
+      .filter(([key]) => !activeMasterKeys || activeMasterKeys.has(key))
+      .map(([key, master]) => `
       <article class="master-card compact">
         <img src="${escapeHtml(master.photo)}" alt="${escapeHtml(master.name)}">
         <div class="master-content">
@@ -99,6 +106,7 @@ function renderSalonCatalog() {
 
   if (serviceList) {
     serviceList.innerHTML = Object.entries(serviceCatalog)
+      .filter(([key]) => !activeServiceKeys || activeServiceKeys.has(key))
       .map(([, service]) => `
         <button
           class="service-card"
@@ -231,6 +239,31 @@ async function loadSalonConfig() {
   const config = await response.json();
   applySalonConfig(config);
   return config;
+}
+
+async function loadCatalogState() {
+  if (!API_BASE_URL || !salonConfig) return;
+  const response = await fetch(`${API_BASE_URL}/api/catalog-state`, {
+    cache: "no-store",
+  });
+  if (!response.ok) throw new Error("Не вдалося оновити каталог.");
+  const state = await response.json();
+  activeMasterKeys = new Set(state.active_masters || []);
+  activeServiceKeys = new Set(state.active_services || []);
+  buildSalonCatalog(salonConfig);
+  Object.entries(state.master_workdays || {}).forEach(([key, workdays]) => {
+    if (masters[key] && Array.isArray(workdays)) {
+      masters[key].workdays = workdays.map(Number);
+    }
+  });
+  masterDaysOff = Object.fromEntries(
+    Object.entries(state.master_days_off || {}).map(([key, days]) => [
+      key,
+      new Set(Array.isArray(days) ? days : []),
+    ])
+  );
+  renderSalonCatalog();
+  renderFavorites();
 }
 
 function getTelegramWebApp() {
@@ -651,7 +684,9 @@ function getFavorites() {
         ([, master]) => master.legacyKey === key
       );
       return match?.[0] || key;
-    }).filter(key => masters[key]);
+    }).filter(key => (
+      masters[key] && (!activeMasterKeys || activeMasterKeys.has(key))
+    ));
 
     if (JSON.stringify(migrated) !== JSON.stringify(saved)) {
       saveFavorites(migrated);
@@ -1457,7 +1492,14 @@ function renderCalendar() {
     button.textContent = day;
 
     const isPast = dateObj < today;
-    const isWorkingDay = workdays.includes(dateObj.getDay());
+    const localIso = [
+      dateObj.getFullYear(),
+      String(dateObj.getMonth() + 1).padStart(2, "0"),
+      String(dateObj.getDate()).padStart(2, "0"),
+    ].join("-");
+    const isWorkingDay =
+      workdays.includes(dateObj.getDay()) &&
+      !masterDaysOff[booking.masterKey]?.has(localIso);
 
     if (isPast || !isWorkingDay) {
       button.classList.add("disabled");
@@ -1500,6 +1542,57 @@ document.querySelector("#next-month").addEventListener("click", () => {
   currentMonth.setMonth(currentMonth.getMonth() + 1);
   renderCalendar();
 });
+
+function selectAvailableTime(time, dateValue, button, status) {
+  booking.date = dateValue || booking.date;
+  booking.time = time;
+
+  document.querySelectorAll(".time-button").forEach(item => {
+    item.classList.remove("selected");
+  });
+  button.classList.add("selected");
+
+  if (bookingFlowMode !== "reschedule") {
+    renderSummary();
+    showScreen("details-screen");
+    return;
+  }
+
+  const confirmButton = document.querySelector("#reschedule-confirm-button");
+  if (confirmButton) {
+    confirmButton.hidden = false;
+    confirmButton.disabled = false;
+    confirmButton.textContent =
+      `Підтвердити перенесення · ${booking.time}`;
+  }
+  status.className = "time-status success";
+  status.textContent =
+    `Обрано ${booking.date} о ${booking.time}. ` +
+    "Натисніть «Підтвердити перенесення».";
+}
+
+function renderNearestTimes(nearest, grid, status) {
+  if (!Array.isArray(nearest) || !nearest.length) return false;
+  status.className = "time-status success";
+  status.textContent = "Найближчий вільний час:";
+  nearest.forEach(option => {
+    const button = document.createElement("button");
+    button.className = "time-button available nearest-time";
+    button.innerHTML =
+      `<strong>${escapeHtml(option.date)} · ${escapeHtml(option.time)}</strong>` +
+      "<small>Найближчий варіант</small>";
+    button.addEventListener("click", () => {
+      selectAvailableTime(
+        option.time,
+        option.date,
+        button,
+        status
+      );
+    });
+    grid.appendChild(button);
+  });
+  return true;
+}
 
 async function renderTimes() {
   const summary = document.querySelector("#time-summary");
@@ -1545,8 +1638,10 @@ async function renderTimes() {
     });
 
     if (!data.workday) {
-      status.className = "time-status warning";
-      status.textContent = "Майстер цього дня не працює. Оберіть іншу дату.";
+      if (!renderNearestTimes(data.nearest, grid, status)) {
+        status.className = "time-status warning";
+        status.textContent = "Майстер цього дня не працює. Оберіть іншу дату.";
+      }
       return;
     }
 
@@ -1558,8 +1653,10 @@ async function renderTimes() {
     );
 
     if (!allSlots.length) {
-      status.className = "time-status warning";
-      status.textContent = "На цю дату немає доступного часу.";
+      if (!renderNearestTimes(data.nearest, grid, status)) {
+        status.className = "time-status warning";
+        status.textContent = "На цю дату немає доступного часу.";
+      }
       return;
     }
 
@@ -1577,33 +1674,8 @@ async function renderTimes() {
       if (!isAvailable) {
         button.disabled = true;
       } else {
-        button.addEventListener("click", async () => {
-          booking.time = time;
-
-          document.querySelectorAll(".time-button").forEach(item => {
-            item.classList.remove("selected");
-          });
-          button.classList.add("selected");
-
-          if (bookingFlowMode !== "reschedule") {
-            renderSummary();
-            showScreen("details-screen");
-            return;
-          }
-
-          const confirmButton =
-            document.querySelector("#reschedule-confirm-button");
-
-          if (confirmButton) {
-            confirmButton.hidden = false;
-            confirmButton.disabled = false;
-            confirmButton.textContent =
-              `Підтвердити перенесення · ${booking.time}`;
-          }
-
-          status.className = "time-status success";
-          status.textContent =
-            `Обрано ${booking.time}. Натисніть «Підтвердити перенесення».`;
+        button.addEventListener("click", () => {
+          selectAvailableTime(time, booking.date, button, status);
         });
       }
 
@@ -1615,8 +1687,10 @@ async function renderTimes() {
       status.textContent =
         `Вільних варіантів: ${available.size}. Зайнятий час позначено сірим.`;
     } else {
-      status.className = "time-status warning";
-      status.textContent = "Усі доступні години вже зайняті. Оберіть іншу дату.";
+      if (!renderNearestTimes(data.nearest, grid, status)) {
+        status.className = "time-status warning";
+        status.textContent = "Усі доступні години вже зайняті. Оберіть іншу дату.";
+      }
     }
   } catch (error) {
     console.error("Availability API error:", error);
@@ -2331,6 +2405,12 @@ async function bootstrapApp() {
     return;
   }
 
+  try {
+    await loadCatalogState();
+  } catch (error) {
+    console.warn("Catalog state error:", error);
+  }
+
   const startup = document.querySelector("#app-startup");
   if (startup) startup.hidden = true;
   document.body.classList.remove("config-loading");
@@ -2374,6 +2454,7 @@ document.querySelector("#server-status-retry")?.addEventListener(
 window.addEventListener("focus", () => {
   if (salonConfig) {
     checkApiHealth();
+    loadCatalogState().catch(error => console.warn(error));
     syncClientBookings();
   }
 });
@@ -2381,6 +2462,7 @@ window.addEventListener("focus", () => {
 document.addEventListener("visibilitychange", () => {
   if (!document.hidden && salonConfig) {
     checkApiHealth();
+    loadCatalogState().catch(error => console.warn(error));
     syncClientBookings();
   }
 });
