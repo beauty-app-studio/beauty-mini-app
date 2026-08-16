@@ -1,4 +1,4 @@
-const APP_VERSION = "7.34.0";
+const APP_VERSION = "7.35.0";
 const CONFIG_URL = `salon_config.json?v=${APP_VERSION}`;
 
 let salonConfig = null;
@@ -163,6 +163,10 @@ function applySalonConfig(config) {
     "--accent-dark": theme.accent_dark,
     "--soft": theme.soft,
     "--page": theme.page,
+    "--surface": theme.surface,
+    "--text": theme.text,
+    "--muted": theme.muted,
+    "--border": theme.border,
   };
   Object.entries(themeVariables).forEach(([name, value]) => {
     if (value) document.documentElement.style.setProperty(name, value);
@@ -2264,7 +2268,7 @@ async function bootstrapApp() {
     telegramWebApp.disableVerticalSwipes?.();
 
     try {
-      const pageColor = salonConfig?.theme?.page || "#f8f5f6";
+      const pageColor = salonConfig?.theme?.page || "#f6f2ed";
       telegramWebApp.setHeaderColor?.(pageColor);
       telegramWebApp.setBackgroundColor?.(pageColor);
     } catch {
@@ -2272,7 +2276,7 @@ async function bootstrapApp() {
     }
 
     document.body.style.backgroundColor =
-      salonConfig?.theme?.page || "#f8f5f6";
+      salonConfig?.theme?.page || "#f6f2ed";
     syncClientBookings();
   }
 
