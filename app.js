@@ -1,4 +1,4 @@
-const APP_VERSION = "7.36.1";
+const APP_VERSION = "7.36.2";
 const CONFIG_URL = `salon_config.json?v=${APP_VERSION}`;
 const TELEGRAM_INIT_DATA_SESSION_KEY =
   "beauty_studio.telegram_init_data";
