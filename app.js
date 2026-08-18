@@ -1,4 +1,4 @@
-const APP_VERSION = "7.36.2";
+const APP_VERSION = "7.37.0";
 const CONFIG_URL = `salon_config.json?v=${APP_VERSION}`;
 const TELEGRAM_INIT_DATA_SESSION_KEY =
   "beauty_studio.telegram_init_data";
@@ -333,7 +333,7 @@ function getInitData() {
   );
 }
 
-async function waitForInitData(timeoutMs = 1200) {
+async function waitForInitData(timeoutMs = 5000) {
   const telegramWebApp = getTelegramWebApp();
   telegramWebApp?.ready?.();
 
@@ -1620,9 +1620,12 @@ async function renderTimes() {
 
   if (!initData) {
     status.className = "time-status warning";
-    status.textContent =
-      "Не вдалося відновити Telegram-сесію. Закрийте це вікно " +
-      `й відкрийте ${SALON_NAME} кнопкою в чаті ще раз.`;
+    status.innerHTML =
+      "Не вдалося відновити Telegram-сесію. " +
+      '<button type="button" class="session-retry-button">' +
+      "Спробувати ще раз</button>";
+    status.querySelector(".session-retry-button")
+      ?.addEventListener("click", renderTimes);
     return;
   }
 
@@ -1838,7 +1841,7 @@ document.querySelector("#booking-form").addEventListener(
       if (successDescription) {
         successDescription.innerHTML =
           `Заявка <strong>№${responseData.booking_id}</strong> успішно створена. ` +
-          `Залишився лише короткий крок — підтвердження від адміністратора.`;
+          `Залишився лише короткий крок — підтвердження салону.`;
       }
 
       if (successTicket) {
@@ -2116,7 +2119,7 @@ document.querySelector("#reschedule-confirm-button")?.addEventListener(
       await syncClientBookings();
       showScreen("client-profile-screen");
       showAppAlert(
-        "Запис перенесено. Новий час очікує підтвердження адміністратора."
+        "Запис перенесено. Новий час очікує підтвердження салону."
       );
     } catch (error) {
       console.error("Reschedule API error:", error);
